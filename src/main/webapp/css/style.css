@@ -1,0 +1,78 @@
+/* Reset + box‑sizing */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Base font */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #ecf0f1;
+}
+
+/* NAVBAR */
+.navbar {
+  background-color: #8e44ad;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+/* Left side links */
+.nav-left a {
+  color: #ecf0f1;
+  text-decoration: none;
+  margin-right: 20px;
+  font-size: 18px;
+}
+
+/* Logo styling */
+.nav-left .logo {
+  font-weight: bold;
+  font-size: 22px;
+}
+
+/* Right side buttons & icon */
+.nav-right {
+  display: flex;
+  align-items: center;
+}
+
+.nav-right a.icon {
+  font-size: 22px;
+  color: #ecf0f1;
+  text-decoration: none;
+  margin-right: 15px;
+}
+
+.nav-right button {
+  background-color: transparent;
+  border: 2px solid #ecf0f1;
+  color: #ecf0f1;
+  padding: 6px 12px;
+  margin-right: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* Hover states */
+.nav-left a:hover,
+.nav-right a.icon:hover {
+  color: #8e44ad;
+  background-color: #bdc3c7;
+  border-radius: 4px;
+}
+
+.nav-right button:hover {
+  background-color: #bdc3c7;
+  color: #8e44ad;
+}
+
+/* Page content wrapper */
+.content {
+  padding: 40px 20px;
+  text-align: center;
+}
