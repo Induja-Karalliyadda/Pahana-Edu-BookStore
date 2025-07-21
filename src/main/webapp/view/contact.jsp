@@ -8,8 +8,8 @@
 </head>
 <body>
 <div class="content">
-  <h1>Blog</h1>
-  <p>Read articles, tips and reviews.</p>
+  <h1>Contact Us</h1>
+  <p>Get in touch with our team.</p>
 </div>
 
 </body>

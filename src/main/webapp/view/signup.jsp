@@ -7,6 +7,12 @@
 <title>Insert title here</title>
 </head>
 <body>
+<div class="content">
+  <h1>Create an Account</h1>
+  <form>
+    <!-- add your form fields here -->
+  </form>
+</div>
 
 </body>
 </html>

@@ -7,6 +7,12 @@
 <title>Insert title here</title>
 </head>
 <body>
+<div class="content">
+  <h1>Log In</h1>
+  <form>
+    <!-- add your form fields here -->
+  </form>
+</div>
 
 </body>
 </html>

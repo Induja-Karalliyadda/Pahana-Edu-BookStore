@@ -7,6 +7,10 @@
 <title>Insert title here</title>
 </head>
 <body>
+<div class="content">
+  <h1>Your Cart</h1>
+  <p>Your selected items will appear here.</p>
+</div>
 
 </body>
 </html>

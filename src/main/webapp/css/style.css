@@ -13,38 +13,50 @@ body {
 
 /* NAVBAR */
 .navbar {
+  display: flex;               /* enable flex children */
+  align-items: center;         /* vertical center */
   background-color: #8e44ad;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 10px 20px;
 }
 
-/* Left side links */
-.nav-left a {
+/* Left: logo only */
+.nav-left {
+  flex: 0;                     /* don’t grow */
+}
+
+.nav-left .logo {
+  color: #ecf0f1;
+  font-weight: bold;
+  font-size: 22px;
+  text-decoration: none;
+}
+
+/* Center: take remaining space, center links */
+.nav-center {
+  flex: 1;                     /* fill gap */
+  display: flex;
+  justify-content: center;     /* center horizontally */
+  gap: 30px;                   /* spacing between links */
+}
+
+.nav-center a {
   color: #ecf0f1;
   text-decoration: none;
-  margin-right: 20px;
   font-size: 18px;
 }
 
-/* Logo styling */
-.nav-left .logo {
-  font-weight: bold;
-  font-size: 22px;
-}
-
-/* Right side buttons & icon */
+/* Right: cart icon + buttons */
 .nav-right {
+  flex: 0;                     /* don’t grow */
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
 .nav-right a.icon {
   font-size: 22px;
   color: #ecf0f1;
   text-decoration: none;
-  margin-right: 15px;
 }
 
 .nav-right button {
@@ -52,14 +64,13 @@ body {
   border: 2px solid #ecf0f1;
   color: #ecf0f1;
   padding: 6px 12px;
-  margin-right: 10px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
 }
 
 /* Hover states */
-.nav-left a:hover,
+.nav-center a:hover,
 .nav-right a.icon:hover {
   color: #8e44ad;
   background-color: #bdc3c7;
@@ -76,3 +87,4 @@ body {
   padding: 40px 20px;
   text-align: center;
 }
+
