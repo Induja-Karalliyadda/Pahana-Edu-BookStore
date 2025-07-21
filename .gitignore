@@ -1,0 +1,26 @@
+# Maven build folder
+/target/
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# IntelliJ IDEA
+*.iml
+.idea/
+
+# Wrapper jars (if you’re using the Maven wrapper)
+/.mvn/
+mvnw
+mvnw.cmd
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Compiled Java classes
+**/*.class
