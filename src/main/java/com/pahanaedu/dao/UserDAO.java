@@ -24,11 +24,15 @@ public class UserDAO {
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 String lastCode = rs.getString(1); // e.g., "C005"
-                int num = Integer.parseInt(lastCode.substring(1));
-                return String.format("C%03d", num + 1);
+                try {
+                    int num = Integer.parseInt(lastCode.substring(1));
+                    return String.format("C%03d", num + 1);
+                } catch (Exception e) {
+                    return "C001";
+                }
             }
         }
-        return "C001"; // First user
+        return "C001";
     }
 
     // Register new user
@@ -71,4 +75,31 @@ public class UserDAO {
         }
         return false;
     }
+
+    // Login: find user by **email** and password
+    public User getUserByEmailAndPassword(String email, String password) {
+        String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, email);
+            pstmt.setString(2, password);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                // Add customer_code if you need
+                return new User(
+                    rs.getString("username"),
+                    rs.getString("address"),
+                    rs.getString("telephone"),
+                    rs.getString("email"),
+                    rs.getString("password"),
+                    rs.getString("role")
+                    // , rs.getString("customer_code") // Add to constructor if you need
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
+

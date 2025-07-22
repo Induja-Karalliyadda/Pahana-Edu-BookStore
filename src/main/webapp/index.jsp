@@ -87,17 +87,19 @@
     <%
       }
     %>
-    <form action="LoginServlet" method="post">
-      <div class="form-group">
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" required autofocus>
-      </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required>
-      </div>
-      <button type="submit" class="login-btn">Login</button>
-    </form>
+  <form action="LoginServlet" method="post">
+  <div class="form-group">
+    <label for="email">UserName</label>
+    <input type="email" id="email" name="email" required autofocus>
+  </div>
+  <div class="form-group">
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required>
+  </div>
+  <button type="submit" class="login-btn">Login</button>
+</form>
+  
+    
     <a href="view/signup.jsp" class="signup-link">Don't have an account? Sign up here</a>
   </div>
 </body>
