@@ -30,6 +30,7 @@
       <a href="#">Orders</a>
       <a href="#">Books</a>
       <a href="#">Users</a>
+      <a href="./Staff.jsp">Staff</a>
       <a href="#">Reports</a>
       <a href="#">Settings</a>
       <a href="${pageContext.request.contextPath}/LogoutServlet" class="logout">Logout</a>

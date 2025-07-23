@@ -10,6 +10,7 @@ public class UserService {
         if (userDAO.userExists(user.getEmail())) {
             return false; // User already exists
         }
+        // Add more validation as needed
         if (user.getUsername() == null || user.getUsername().trim().isEmpty()) return false;
         if (user.getEmail() == null || user.getEmail().trim().isEmpty()) return false;
         if (user.getPassword() == null || user.getPassword().length() < 6) return false;
@@ -17,8 +18,8 @@ public class UserService {
         return userDAO.registerUser(user);
     }
 
-    // This now logs in by email
-    public static User loginUser(String email, String password) {
-        return userDAO.getUserByEmailAndPassword(email, password);
+    public static User loginUser(String username, String password) {
+        // Returns User object if credentials match, else null
+        return userDAO.getUserByEmailAndPassword(username, password);
     }
 }
