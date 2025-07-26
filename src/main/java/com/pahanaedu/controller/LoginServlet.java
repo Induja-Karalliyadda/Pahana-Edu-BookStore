@@ -8,34 +8,34 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
 
-@WebServlet("/LoginServlet")
+@WebServlet("/login")
 public class LoginServlet extends HttpServlet {
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        String email = request.getParameter("email");
-        String password = request.getParameter("password");
+  @Override
+  protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+      throws ServletException, IOException {
+    req.setCharacterEncoding("UTF-8");
 
-        User user = UserService.loginUser(email, password);
-        if (user != null) {
-            HttpSession session = request.getSession();
-            session.setAttribute("user", user);
+    String idOrEmail = req.getParameter("email");
+    String pwd       = req.getParameter("password");
+    User u = UserService.loginUser(idOrEmail, pwd);
 
-            String role = user.getRole();
-            if ("admin".equalsIgnoreCase(role)) {
-                response.sendRedirect("view/AdminDashboard.jsp");
-            } else if ("staff".equalsIgnoreCase(role)) {
-                response.sendRedirect("view/StaffDashboard.jsp");
-            } else {
-                response.sendRedirect("view/UserDashboard.jsp");
-            }
-        } else {
-            response.sendRedirect("index.jsp?error=1");
-        }
+    if (u == null) {
+      resp.sendRedirect(req.getContextPath() + "/index.jsp?error=1");
+      return;
     }
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        response.sendRedirect("index.jsp");
+    HttpSession session = req.getSession();
+    session.setAttribute("user", u);
+
+    String r = u.getRole().toLowerCase();
+    if (r.equals("admin")) {
+      resp.sendRedirect(req.getContextPath() + "/view/AdminDashboard.jsp");
+    } else if (r.equals("staff")) {
+      resp.sendRedirect(req.getContextPath() + "/view/StaffDashboard.jsp");
+    } else {
+      resp.sendRedirect(req.getContextPath() + "/view/UserDashboard.jsp");
     }
+  }
 }
+
 

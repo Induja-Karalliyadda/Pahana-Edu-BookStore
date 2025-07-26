@@ -1,10 +1,13 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pahana Edu Book Store</title>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/script.js" defer></script>
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+  <script src="${pageContext.request.contextPath}/js/script.js" defer></script>
   <style>
     .login-container {
       max-width: 400px;
@@ -74,33 +77,29 @@
   </style>
 </head>
 <body>
-<br>
 
   <div class="login-container">
     <div class="login-title">Pahana Edu Book Store</div>
-    <%-- Display error if login failed --%>
-    <%
-      String error = request.getParameter("error");
-      if ("1".equals(error)) {
-    %>
-      <div class="login-error">Invalid username or password.</div>
-    <%
-      }
-    %>
-  <form action="LoginServlet" method="post">
-  <div class="form-group">
-    <label for="email">UserName</label>
-    <input type="email" id="email" name="email" required autofocus>
+
+    <!-- show error if login failed -->
+    <c:if test="${param.error == '1'}">
+      <div class="login-error">Invalid email/username or password.</div>
+    </c:if>
+
+    <form action="${pageContext.request.contextPath}/login" method="post">
+      <div class="form-group">
+        <label for="email">Email or Username</label>
+        <input type="text" id="email" name="email" required autofocus>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <button type="submit" class="login-btn">Login</button>
+    </form>
+
+   <a href="view/signup.jsp" class="signup-link">Don't have an account? Sign up here</a>
   </div>
-  <div class="form-group">
-    <label for="password">Password</label>
-    <input type="password" id="password" name="password" required>
-  </div>
-  <button type="submit" class="login-btn">Login</button>
-</form>
-  
-    
-    <a href="view/signup.jsp" class="signup-link">Don't have an account? Sign up here</a>
-  </div>
+
 </body>
 </html>

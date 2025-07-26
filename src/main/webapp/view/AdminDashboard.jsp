@@ -29,7 +29,7 @@
       <a href="./AdminDashboard.jsp" class="active">Dashboard</a>
       <a href="#">Orders</a>
       <a href="#">Books</a>
-      <a href="#">Users</a>
+      <a href="./Users.jsp">Users</a>
       <a href="./Staff.jsp">Staff</a>
       <a href="#">Reports</a>
       <a href="#">Settings</a>

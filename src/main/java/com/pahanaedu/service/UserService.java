@@ -3,23 +3,19 @@ package com.pahanaedu.service;
 import com.pahanaedu.dao.UserDAO;
 import com.pahanaedu.model.User;
 
+import java.util.List;
+
 public class UserService {
-    private static UserDAO userDAO = new UserDAO();
+    private static final UserDAO dao = new UserDAO();
 
-    public static boolean registerUser(User user) {
-        if (userDAO.userExists(user.getEmail())) {
-            return false; // User already exists
-        }
-        // Add more validation as needed
-        if (user.getUsername() == null || user.getUsername().trim().isEmpty()) return false;
-        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) return false;
-        if (user.getPassword() == null || user.getPassword().length() < 6) return false;
+    public static List<User>   getAllUsers()    { return dao.findAllUsers(); }
+    public static List<User>   searchUsers(String kw) { return dao.searchUsers(kw); }
+    public static boolean      updateUser(User u)    { return dao.updateUser(u); }
+    public static boolean      deleteUser(int id)    { return dao.deleteUser(id); }
 
-        return userDAO.registerUser(user);
-    }
-
-    public static User loginUser(String username, String password) {
-        // Returns User object if credentials match, else null
-        return userDAO.getUserByEmailAndPassword(username, password);
-    }
+    // your existing sign‑up / login methods:
+    public static boolean      registerUser(User u)  { return dao.registerUser(u); }
+    public static User         loginUser(String idOrEmail, String pwd)
+                                                     { return dao.getUserByEmailAndPassword(idOrEmail,pwd); }
+    
 }

@@ -1,102 +1,145 @@
 package com.pahanaedu.dao;
 
 import com.pahanaedu.model.Staff;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class StaffDAO {
-
-    private static final String URL  = "jdbc:mysql://localhost:3306/pahana_edu_book_store";
+    private static final String URL = "jdbc:mysql://localhost:3306/pahana_edu_book_store";
     private static final String USER = "root";
     private static final String PASS = "1234";
 
     private Connection getConnection() throws SQLException {
-        try { Class.forName("com.mysql.cj.jdbc.Driver"); }
-        catch (ClassNotFoundException e) { throw new SQLException("MySQL Driver not found", e); }
-        return DriverManager.getConnection(URL, USER, PASS);
-    }
-
-    private String nextCode(Connection c) throws SQLException {
-        String sql = "SELECT MAX(CAST(SUBSTRING(customer_code,2) AS UNSIGNED)) FROM users";
-        try (PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            int max = 0;
-            if (rs.next()) max = rs.getInt(1);
-            return String.format("C%03d", max + 1);
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection conn = DriverManager.getConnection(URL, USER, PASS);
+            System.out.println("✅ Database connection successful");
+            return conn;
+        } catch (ClassNotFoundException e) {
+            System.err.println("❌ MySQL Driver not found");
+            throw new SQLException("MySQL Driver not found", e);
+        } catch (SQLException e) {
+            System.err.println("❌ Database connection failed: " + e.getMessage());
+            throw e;
         }
     }
 
-    private Staff map(ResultSet rs) throws SQLException {
-        Staff s = new Staff();
-        s.setId(rs.getInt("id"));
-        s.setUsername(rs.getString("username"));
-        s.setAddress(rs.getString("address"));
-        s.setTelephone(rs.getString("telephone"));
-        s.setEmail(rs.getString("email"));
-        s.setPassword(rs.getString("password"));
-        s.setCustomerCode(rs.getString("customer_code"));
-        return s;
-    }
-
     public List<Staff> findAll() {
-        List<Staff> list = new ArrayList<>();
-        String sql = "SELECT * FROM users WHERE role='staff' ORDER BY id DESC";
-        try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) list.add(map(rs));
-        } catch (SQLException e) { e.printStackTrace(); }
-        return list;
+        List<Staff> staffList = new ArrayList<>();
+        String sql = "SELECT id, username, address, telephone, email, customer_code FROM users WHERE role = 'staff' ORDER BY id";
+        
+        System.out.println("🔍 Executing SQL: " + sql);
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            while (rs.next()) {
+                Staff staff = new Staff();
+                staff.setId(rs.getInt("id"));
+                staff.setUsername(rs.getString("username"));
+                staff.setAddress(rs.getString("address"));
+                staff.setTelephone(rs.getString("telephone"));
+                staff.setEmail(rs.getString("email"));
+                staff.setCustomerCode(rs.getString("customer_code"));
+                
+                staffList.add(staff);
+                System.out.println("📋 Found staff: " + staff.getUsername() + " (ID: " + staff.getId() + ")");
+            }
+            
+            System.out.println("✅ Total staff found: " + staffList.size());
+            
+        } catch (SQLException e) {
+            System.err.println("❌ Error in findAll(): " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return staffList;
     }
 
-    public boolean insert(Staff s) {
-        String sql = "INSERT INTO users (username,address,telephone,email,password,role,customer_code) " +
-                     "VALUES (?,?,?,?,SHA2(?,256),'staff',?)";
-        try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+    public boolean insert(Staff staff) {
+        String sql = "INSERT INTO users (username, address, telephone, email, password, role, customer_code) VALUES (?, ?, ?, ?, SHA2(?, 256), 'staff', ?)";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            String code = nextCode(c);
-            ps.setString(1, s.getUsername());
-            ps.setString(2, s.getAddress());
-            ps.setString(3, s.getTelephone());
-            ps.setString(4, s.getEmail());
-            ps.setString(5, s.getPassword());
-            ps.setString(6, code);
+            String newCode = generateNextCustomerCode(conn);
+            
+            stmt.setString(1, staff.getUsername());
+            stmt.setString(2, staff.getAddress());
+            stmt.setString(3, staff.getTelephone());
+            stmt.setString(4, staff.getEmail());
+            stmt.setString(5, staff.getPassword());
+            stmt.setString(6, newCode);
 
-            return ps.executeUpdate() > 0;
+            int result = stmt.executeUpdate();
+            System.out.println("✅ Staff insert result: " + result + " rows affected");
+            return result > 0;
+            
         } catch (SQLException e) {
-            System.err.println("Insert Staff failed: " + e.getMessage());
+            System.err.println("❌ Error inserting staff: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    public boolean update(Staff s) {
-        String sql = "UPDATE users SET username=?,address=?,telephone=?,email=? WHERE id=? AND role='staff'";
-        try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+    public boolean update(Staff staff) {
+        String sql = "UPDATE users SET username=?, address=?, telephone=?, email=? WHERE id=? AND role='staff'";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            ps.setString(1, s.getUsername());
-            ps.setString(2, s.getAddress());
-            ps.setString(3, s.getTelephone());
-            ps.setString(4, s.getEmail());
-            ps.setInt(5, s.getId());
+            stmt.setString(1, staff.getUsername());
+            stmt.setString(2, staff.getAddress());
+            stmt.setString(3, staff.getTelephone());
+            stmt.setString(4, staff.getEmail());
+            stmt.setInt(5, staff.getId());
 
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) { e.printStackTrace(); }
-        return false;
+            int result = stmt.executeUpdate();
+            System.out.println("✅ Staff update result: " + result + " rows affected");
+            return result > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("❌ Error updating staff: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean delete(int id) {
         String sql = "DELETE FROM users WHERE id=? AND role='staff'";
-        try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) { e.printStackTrace(); }
-        return false;
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, id);
+            int result = stmt.executeUpdate();
+            System.out.println("✅ Staff delete result: " + result + " rows affected");
+            return result > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("❌ Error deleting staff: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private String generateNextCustomerCode(Connection conn) throws SQLException {
+        String sql = "SELECT MAX(CAST(SUBSTRING(customer_code, 2) AS UNSIGNED)) FROM users WHERE customer_code LIKE 'C%'";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            int maxNumber = 0;
+            if (rs.next()) {
+                maxNumber = rs.getInt(1);
+            }
+            
+            String newCode = String.format("C%03d", maxNumber + 1);
+            System.out.println("🔢 Generated new customer code: " + newCode);
+            return newCode;
+        }
     }
 }
 
