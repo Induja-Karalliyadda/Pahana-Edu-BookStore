@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 import java.sql.*;
 
 @WebServlet("/debug")
-public class DebugServlet extends HttpServlet {
+public class DebugController extends HttpServlet {
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

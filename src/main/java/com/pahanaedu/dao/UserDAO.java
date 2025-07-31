@@ -17,7 +17,7 @@ public class UserDAO {
             return conn;
         } catch (ClassNotFoundException e) {
             System.err.println("MySQL JDBC Driver not found: " + e.getMessage());
-            throw new SQLException("MySQL JDBC Driver not found", e);
+            throw new SQLException(e);
         } catch (SQLException e) {
             System.err.println("Database connection failed: " + e.getMessage());
             throw e;
@@ -32,20 +32,15 @@ public class UserDAO {
         u.setAddress(rs.getString("address"));
         u.setTelephone(rs.getString("telephone"));
         u.setEmail(rs.getString("email"));
-        // Include role for debugging
-        String role = rs.getString("role");
-        u.setRole(role);
-        System.out.println("Mapped user: " + u.getUsername() + " with role: " + role);
         return u;
     }
 
     // 1) List all users
     public List<User> findAllUsers() {
         List<User> list = new ArrayList<>();
-        String sql = "SELECT id, username, address, telephone, email, role, customer_code FROM users WHERE role='user' ORDER BY id";
+        String sql = "SELECT * FROM users WHERE role='user' ORDER BY id";
         
-        System.out.println("=== Executing findAllUsers ===");
-        System.out.println("SQL: " + sql);
+        System.out.println("Executing findAllUsers query: " + sql);
         
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
@@ -56,6 +51,7 @@ public class UserDAO {
                 User user = mapRow(rs);
                 list.add(user);
                 count++;
+                System.out.println("Found user: " + user.getUsername() + " (" + user.getCustomerCode() + ")");
             }
             System.out.println("Total users found: " + count);
             
@@ -63,19 +59,15 @@ public class UserDAO {
             System.err.println("Error in findAllUsers: " + ex.getMessage());
             ex.printStackTrace();
         }
-        
-        System.out.println("Returning list with " + list.size() + " users");
         return list;
     }
 
     // 2) Search users by username or customer code
     public List<User> searchUsers(String keyword) {
         List<User> list = new ArrayList<>();
-        String sql = "SELECT id, username, address, telephone, email, role, customer_code FROM users WHERE role='user' AND (username LIKE ? OR customer_code LIKE ?) ORDER BY id";
+        String sql = "SELECT * FROM users WHERE role='user' AND (username LIKE ? OR customer_code LIKE ?) ORDER BY id";
         
-        System.out.println("=== Executing searchUsers ===");
-        System.out.println("SQL: " + sql);
-        System.out.println("Keyword: '" + keyword + "'");
+        System.out.println("Executing searchUsers query with keyword: " + keyword);
         
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -83,8 +75,6 @@ public class UserDAO {
             String pat = "%" + keyword + "%";
             ps.setString(1, pat);
             ps.setString(2, pat);
-            
-            System.out.println("Search pattern: '" + pat + "'");
 
             try (ResultSet rs = ps.executeQuery()) {
                 int count = 0;
@@ -92,6 +82,7 @@ public class UserDAO {
                     User user = mapRow(rs);
                     list.add(user);
                     count++;
+                    System.out.println("Found user: " + user.getUsername() + " (" + user.getCustomerCode() + ")");
                 }
                 System.out.println("Total users found in search: " + count);
             }
@@ -99,8 +90,6 @@ public class UserDAO {
             System.err.println("Error in searchUsers: " + ex.getMessage());
             ex.printStackTrace();
         }
-        
-        System.out.println("Returning search list with " + list.size() + " users");
         return list;
     }
 
@@ -108,8 +97,7 @@ public class UserDAO {
     public boolean updateUser(User u) {
         String sql = "UPDATE users SET username=?, address=?, telephone=?, email=? WHERE id=? AND role='user'";
         
-        System.out.println("=== Updating user ===");
-        System.out.println("User ID: " + u.getId() + ", Username: " + u.getUsername());
+        System.out.println("Updating user: " + u.getId() + " - " + u.getUsername());
         
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -135,8 +123,7 @@ public class UserDAO {
     public boolean deleteUser(int id) {
         String sql = "DELETE FROM users WHERE id=? AND role='user'";
         
-        System.out.println("=== Deleting user ===");
-        System.out.println("User ID: " + id);
+        System.out.println("Deleting user with ID: " + id);
         
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -161,8 +148,7 @@ public class UserDAO {
             VALUES (?, ?, ?, ?, SHA2(?, 256), 'user', ?)
         """;
         
-        System.out.println("=== Registering new user ===");
-        System.out.println("Username: " + u.getUsername());
+        System.out.println("Registering new user: " + u.getUsername());
         
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -201,14 +187,12 @@ public class UserDAO {
     // 6) Login method
     public User getUserByEmailAndPassword(String idOrEmail, String pwd) {
         String sql = """
-            SELECT id, username, address, telephone, email, role, customer_code
-            FROM users 
+            SELECT * FROM users 
             WHERE (email = ? OR username = ?) 
               AND password = SHA2(?, 256)
         """;
         
-        System.out.println("=== Login attempt ===");
-        System.out.println("ID/Email: " + idOrEmail);
+        System.out.println("Login attempt for: " + idOrEmail);
         
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -227,7 +211,7 @@ public class UserDAO {
                     u.setEmail(rs.getString("email"));
                     u.setRole(rs.getString("role"));
                     
-                    System.out.println("Login successful for user: " + u.getUsername() + " (role: " + u.getRole() + ")");
+                    System.out.println("Login successful for user: " + u.getUsername());
                     return u;
                 }
             }

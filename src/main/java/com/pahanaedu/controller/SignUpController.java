@@ -9,7 +9,7 @@ import javax.servlet.http.*;
 import java.io.IOException;
 
 @WebServlet("/signup")
-public class SignUpServlet extends HttpServlet {
+public class SignUpController extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {

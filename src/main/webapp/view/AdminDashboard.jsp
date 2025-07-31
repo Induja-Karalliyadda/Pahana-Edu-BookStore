@@ -28,7 +28,7 @@
       <h4 class="menu-title">Menu</h4>
       <a href="./AdminDashboard.jsp" class="active">Dashboard</a>
       <a href="#">Orders</a>
-      <a href="#">Books</a>
+      <a href="./Item.jsp">Items</a>
       <a href="./Users.jsp">Users</a>
       <a href="./Staff.jsp">Staff</a>
       <a href="#">Reports</a>

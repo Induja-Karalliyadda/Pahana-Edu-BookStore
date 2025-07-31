@@ -11,7 +11,7 @@ import java.sql.*;
 import java.util.List;
 
 @WebServlet("/staff")
-public class StaffServlet extends HttpServlet {
+public class StaffController extends HttpServlet {
     
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
