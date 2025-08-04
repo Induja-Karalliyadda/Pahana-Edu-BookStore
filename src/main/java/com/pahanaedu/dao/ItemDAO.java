@@ -20,14 +20,15 @@ public class ItemDAO {
         }
     }
 
+    // BOOKS
     public List<Book> findBooks(String titlePattern, String categoryFilter) throws SQLException {
         List<Book> list = new ArrayList<>();
         String sql = "SELECT * FROM books WHERE title LIKE ? AND ( ? = '' OR category = ? ) ORDER BY book_id";
         try (Connection c = DriverManager.getConnection(URL, USER, PASS);
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, "%" + titlePattern + "%");
-            ps.setString(2, categoryFilter);
-            ps.setString(3, categoryFilter);
+            ps.setString(1, "%" + (titlePattern == null ? "" : titlePattern) + "%");
+            ps.setString(2, categoryFilter == null ? "" : categoryFilter);
+            ps.setString(3, categoryFilter == null ? "" : categoryFilter);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Book b = new Book();
@@ -37,6 +38,9 @@ public class ItemDAO {
                     b.setCategory(rs.getString("category"));
                     b.setDescription(rs.getString("description"));
                     b.setSupplier(rs.getString("supplier"));
+                    b.setCostPrice(rs.getDouble("cost_price"));
+                    b.setSellingPrice(rs.getDouble("selling_price"));
+                    b.setStock(rs.getInt("stock"));
                     b.setImageUrl(rs.getString("image_url"));
                     b.setMinStock(rs.getInt("min_stock"));
                     list.add(b);
@@ -46,21 +50,8 @@ public class ItemDAO {
         return list;
     }
 
-    public List<String> findAllBookCategories() throws SQLException {
-        List<String> cats = new ArrayList<>();
-        String sql = "SELECT DISTINCT category FROM books ORDER BY category";
-        try (Connection c = DriverManager.getConnection(URL, USER, PASS);
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                cats.add(rs.getString("category"));
-            }
-        }
-        return cats;
-    }
-
     public void saveBook(Book b) throws SQLException {
-        String sql = "INSERT INTO books (title, author, category, description, supplier, image_url, min_stock) VALUES (?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO books (title, author, category, description, supplier, cost_price, selling_price, stock, image_url, min_stock) VALUES (?,?,?,?,?,?,?,?,?,?)";
         try (Connection c = DriverManager.getConnection(URL, USER, PASS);
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, b.getTitle());
@@ -68,14 +59,17 @@ public class ItemDAO {
             ps.setString(3, b.getCategory());
             ps.setString(4, b.getDescription());
             ps.setString(5, b.getSupplier());
-            ps.setString(6, b.getImageUrl());
-            ps.setInt(7, b.getMinStock());
+            ps.setDouble(6, b.getCostPrice());
+            ps.setDouble(7, b.getSellingPrice());
+            ps.setInt(8, b.getStock());
+            ps.setString(9, b.getImageUrl());
+            ps.setInt(10, b.getMinStock());
             ps.executeUpdate();
         }
     }
 
     public void updateBook(Book b) throws SQLException {
-        String sql = "UPDATE books SET title=?, author=?, category=?, description=?, supplier=?, image_url=?, min_stock=? WHERE book_id=?";
+        String sql = "UPDATE books SET title=?, author=?, category=?, description=?, supplier=?, cost_price=?, selling_price=?, stock=?, image_url=?, min_stock=? WHERE book_id=?";
         try (Connection c = DriverManager.getConnection(URL, USER, PASS);
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, b.getTitle());
@@ -83,9 +77,12 @@ public class ItemDAO {
             ps.setString(3, b.getCategory());
             ps.setString(4, b.getDescription());
             ps.setString(5, b.getSupplier());
-            ps.setString(6, b.getImageUrl());
-            ps.setInt(7, b.getMinStock());
-            ps.setInt(8, b.getBookId());
+            ps.setDouble(6, b.getCostPrice());
+            ps.setDouble(7, b.getSellingPrice());
+            ps.setInt(8, b.getStock());
+            ps.setString(9, b.getImageUrl());
+            ps.setInt(10, b.getMinStock());
+            ps.setInt(11, b.getBookId());
             ps.executeUpdate();
         }
     }
@@ -104,6 +101,9 @@ public class ItemDAO {
                     b.setCategory(rs.getString("category"));
                     b.setDescription(rs.getString("description"));
                     b.setSupplier(rs.getString("supplier"));
+                    b.setCostPrice(rs.getDouble("cost_price"));
+                    b.setSellingPrice(rs.getDouble("selling_price"));
+                    b.setStock(rs.getInt("stock"));
                     b.setImageUrl(rs.getString("image_url"));
                     b.setMinStock(rs.getInt("min_stock"));
                     return b;
@@ -122,15 +122,15 @@ public class ItemDAO {
         }
     }
 
-    // Accessory methods (analogous to books)
+    // ACCESSORIES
     public List<Accessory> findAccessories(String namePattern, String categoryFilter) throws SQLException {
         List<Accessory> list = new ArrayList<>();
         String sql = "SELECT * FROM accessories WHERE name LIKE ? AND ( ? = '' OR category = ? ) ORDER BY accessory_id";
         try (Connection c = DriverManager.getConnection(URL, USER, PASS);
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, "%" + namePattern + "%");
-            ps.setString(2, categoryFilter);
-            ps.setString(3, categoryFilter);
+            ps.setString(1, "%" + (namePattern == null ? "" : namePattern) + "%");
+            ps.setString(2, categoryFilter == null ? "" : categoryFilter);
+            ps.setString(3, categoryFilter == null ? "" : categoryFilter);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Accessory a = new Accessory();
@@ -139,6 +139,9 @@ public class ItemDAO {
                     a.setCategory(rs.getString("category"));
                     a.setDescription(rs.getString("description"));
                     a.setSupplier(rs.getString("supplier"));
+                    a.setCostPrice(rs.getDouble("cost_price"));
+                    a.setSellingPrice(rs.getDouble("selling_price"));
+                    a.setStock(rs.getInt("stock"));
                     a.setImageUrl(rs.getString("image_url"));
                     a.setMinStock(rs.getInt("min_stock"));
                     list.add(a);
@@ -149,30 +152,36 @@ public class ItemDAO {
     }
 
     public void saveAccessory(Accessory a) throws SQLException {
-        String sql = "INSERT INTO accessories (name, category, description, supplier, image_url, min_stock) VALUES (?,?,?,?,?,?)";
+        String sql = "INSERT INTO accessories (name, category, description, supplier, cost_price, selling_price, stock, image_url, min_stock) VALUES (?,?,?,?,?,?,?,?,?)";
         try (Connection c = DriverManager.getConnection(URL, USER, PASS);
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, a.getName());
             ps.setString(2, a.getCategory());
             ps.setString(3, a.getDescription());
             ps.setString(4, a.getSupplier());
-            ps.setString(5, a.getImageUrl());
-            ps.setInt(6, a.getMinStock());
+            ps.setDouble(5, a.getCostPrice());
+            ps.setDouble(6, a.getSellingPrice());
+            ps.setInt(7, a.getStock());
+            ps.setString(8, a.getImageUrl());
+            ps.setInt(9, a.getMinStock());
             ps.executeUpdate();
         }
     }
 
     public void updateAccessory(Accessory a) throws SQLException {
-        String sql = "UPDATE accessories SET name=?, category=?, description=?, supplier=?, image_url=?, min_stock=? WHERE accessory_id=?";
+        String sql = "UPDATE accessories SET name=?, category=?, description=?, supplier=?, cost_price=?, selling_price=?, stock=?, image_url=?, min_stock=? WHERE accessory_id=?";
         try (Connection c = DriverManager.getConnection(URL, USER, PASS);
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, a.getName());
             ps.setString(2, a.getCategory());
             ps.setString(3, a.getDescription());
             ps.setString(4, a.getSupplier());
-            ps.setString(5, a.getImageUrl());
-            ps.setInt(6, a.getMinStock());
-            ps.setInt(7, a.getAccessoryId());
+            ps.setDouble(5, a.getCostPrice());
+            ps.setDouble(6, a.getSellingPrice());
+            ps.setInt(7, a.getStock());
+            ps.setString(8, a.getImageUrl());
+            ps.setInt(9, a.getMinStock());
+            ps.setInt(10, a.getAccessoryId());
             ps.executeUpdate();
         }
     }
@@ -190,6 +199,9 @@ public class ItemDAO {
                     a.setCategory(rs.getString("category"));
                     a.setDescription(rs.getString("description"));
                     a.setSupplier(rs.getString("supplier"));
+                    a.setCostPrice(rs.getDouble("cost_price"));
+                    a.setSellingPrice(rs.getDouble("selling_price"));
+                    a.setStock(rs.getInt("stock"));
                     a.setImageUrl(rs.getString("image_url"));
                     a.setMinStock(rs.getInt("min_stock"));
                     return a;
@@ -208,8 +220,13 @@ public class ItemDAO {
         }
     }
 
-	public static boolean testConnection() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    public static boolean testConnection() {
+        try (Connection c = DriverManager.getConnection(URL, USER, PASS)) {
+            return c != null && !c.isClosed();
+        } catch (SQLException e) {
+            return false;
+        }
+    }
 }
+
+

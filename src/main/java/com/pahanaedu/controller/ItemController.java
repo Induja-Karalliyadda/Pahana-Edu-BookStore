@@ -46,12 +46,10 @@ public class ItemController extends HttpServlet {
         String searchCategory = request.getParameter("searchCategory");
 
         if ("book".equals(mainCategory)) {
-            List<Book> books = itemService.getBooks(searchName, searchCategory);
-            request.setAttribute("books", books);
+            request.setAttribute("books", itemService.getBooks(searchName, searchCategory));
             request.setAttribute("bookCategories", BOOK_CATEGORIES);
         } else {
-            List<Accessory> accessories = itemService.getAccessories(searchName, searchCategory);
-            request.setAttribute("accessories", accessories);
+            request.setAttribute("accessories", itemService.getAccessories(searchName, searchCategory));
             request.setAttribute("accessoryCategories", ACCESSORY_CATEGORIES);
         }
 
@@ -84,14 +82,14 @@ public class ItemController extends HttpServlet {
                     success = itemService.deleteAccessory(id);
                 }
                 if (success) {
-                    response.sendRedirect("items?mainCategory=" + mainCategory + "&success=deleted");
+                    response.sendRedirect(request.getContextPath() + "/items?mainCategory=" + mainCategory + "&success=deleted");
                 } else {
-                    response.sendRedirect("items?mainCategory=" + mainCategory + "&error=" + URLEncoder.encode("Delete failed", "UTF-8"));
+                    response.sendRedirect(request.getContextPath() + "/items?mainCategory=" + mainCategory + "&error=" + URLEncoder.encode("Delete failed", "UTF-8"));
                 }
                 return;
             } catch (Exception e) {
                 e.printStackTrace();
-                response.sendRedirect("items?mainCategory=" + mainCategory + "&error=" + URLEncoder.encode("Delete exception", "UTF-8"));
+                response.sendRedirect(request.getContextPath() + "/items?mainCategory=" + mainCategory + "&error=" + URLEncoder.encode("Delete exception", "UTF-8"));
                 return;
             }
         }
@@ -133,7 +131,7 @@ public class ItemController extends HttpServlet {
             }
         }
 
-        String redirect = "items?mainCategory=" + mainCategory;
+        String redirect = request.getContextPath() + "/items?mainCategory=" + mainCategory;
         if (success) {
             redirect += "&success=1";
         } else {
@@ -145,16 +143,16 @@ public class ItemController extends HttpServlet {
 
     private boolean handleBook(HttpServletRequest request, String uploadDir, String action) {
         try {
-            Book book;
+            com.pahanaedu.model.Book book;
             if ("update".equalsIgnoreCase(action)) {
                 int bookId = Integer.parseInt(request.getParameter("bookId"));
                 book = itemService.getBookById(bookId);
                 if (book == null) {
-                    book = new Book();
+                    book = new com.pahanaedu.model.Book();
                     book.setBookId(bookId);
                 }
             } else {
-                book = new Book();
+                book = new com.pahanaedu.model.Book();
             }
 
             book.setTitle(request.getParameter("title"));
@@ -163,6 +161,15 @@ public class ItemController extends HttpServlet {
             book.setDescription(request.getParameter("descriptionBook"));
             book.setSupplier(request.getParameter("supplierBook"));
             book.setMinStock(Integer.parseInt(Optional.ofNullable(request.getParameter("minStockBook")).orElse("0")));
+            try {
+                book.setCostPrice(Double.parseDouble(Optional.ofNullable(request.getParameter("costPriceBook")).orElse("0")));
+            } catch (NumberFormatException ignored) { book.setCostPrice(0); }
+            try {
+                book.setSellingPrice(Double.parseDouble(Optional.ofNullable(request.getParameter("sellingPriceBook")).orElse("0")));
+            } catch (NumberFormatException ignored) { book.setSellingPrice(0); }
+            try {
+                book.setStock(Integer.parseInt(Optional.ofNullable(request.getParameter("stockBook")).orElse("0")));
+            } catch (NumberFormatException ignored) { book.setStock(0); }
 
             Part imagePart = request.getPart("imgBook");
             if (imagePart != null && imagePart.getSize() > 0) {
@@ -189,16 +196,16 @@ public class ItemController extends HttpServlet {
 
     private boolean handleAccessory(HttpServletRequest request, String uploadDir, String action) {
         try {
-            Accessory acc;
+            com.pahanaedu.model.Accessory acc;
             if ("update".equalsIgnoreCase(action)) {
                 int accId = Integer.parseInt(request.getParameter("accessoryId"));
                 acc = itemService.getAccessoryById(accId);
                 if (acc == null) {
-                    acc = new Accessory();
+                    acc = new com.pahanaedu.model.Accessory();
                     acc.setAccessoryId(accId);
                 }
             } else {
-                acc = new Accessory();
+                acc = new com.pahanaedu.model.Accessory();
             }
 
             acc.setName(request.getParameter("itemName"));
@@ -206,6 +213,15 @@ public class ItemController extends HttpServlet {
             acc.setDescription(request.getParameter("descriptionAcc"));
             acc.setSupplier(request.getParameter("supplierAcc"));
             acc.setMinStock(Integer.parseInt(Optional.ofNullable(request.getParameter("minStockAcc")).orElse("0")));
+            try {
+                acc.setCostPrice(Double.parseDouble(Optional.ofNullable(request.getParameter("costPriceAcc")).orElse("0")));
+            } catch (NumberFormatException ignored) { acc.setCostPrice(0); }
+            try {
+                acc.setSellingPrice(Double.parseDouble(Optional.ofNullable(request.getParameter("sellingPriceAcc")).orElse("0")));
+            } catch (NumberFormatException ignored) { acc.setSellingPrice(0); }
+            try {
+                acc.setStock(Integer.parseInt(Optional.ofNullable(request.getParameter("stockAcc")).orElse("0")));
+            } catch (NumberFormatException ignored) { acc.setStock(0); }
 
             Part imagePart = request.getPart("imgAcc");
             if (imagePart != null && imagePart.getSize() > 0) {
@@ -230,8 +246,4 @@ public class ItemController extends HttpServlet {
         }
     }
 }
-
-
-
-
 

@@ -6,80 +6,58 @@ public class Accessory {
     private String category;
     private String description;
     private String supplier;
+    private double costPrice;
+    private double sellingPrice;
+    private int stock;
     private String imageUrl;
     private int minStock;
 
-    // Default constructor
     public Accessory() {}
 
-    // Constructor with parameters
-    public Accessory(int accessoryId, String name, String category, String description, 
-                    String supplier, String imageUrl, int minStock) {
+    public Accessory(int accessoryId, String name, String category, String description,
+                     String supplier, double costPrice, double sellingPrice, int stock,
+                     String imageUrl, int minStock) {
         this.accessoryId = accessoryId;
         this.name = name;
         this.category = category;
         this.description = description;
         this.supplier = supplier;
+        this.costPrice = costPrice;
+        this.sellingPrice = sellingPrice;
+        this.stock = stock;
         this.imageUrl = imageUrl;
         this.minStock = minStock;
     }
 
-    // Getters and Setters
-    public int getAccessoryId() {
-        return accessoryId;
-    }
+    public int getAccessoryId() { return accessoryId; }
+    public void setAccessoryId(int accessoryId) { this.accessoryId = accessoryId; }
 
-    public void setAccessoryId(int accessoryId) {
-        this.accessoryId = accessoryId;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public String getName() {
-        return name;
-    }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public String getCategory() {
-        return category;
-    }
+    public String getSupplier() { return supplier; }
+    public void setSupplier(String supplier) { this.supplier = supplier; }
 
-    public void setCategory(String category) {
-        this.category = category;
-    }
+    public double getCostPrice() { return costPrice; }
+    public void setCostPrice(double costPrice) { this.costPrice = costPrice; }
 
-    public String getDescription() {
-        return description;
-    }
+    public double getSellingPrice() { return sellingPrice; }
+    public void setSellingPrice(double sellingPrice) { this.sellingPrice = sellingPrice; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public int getStock() { return stock; }
+    public void setStock(int stock) { this.stock = stock; }
 
-    public String getSupplier() {
-        return supplier;
-    }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
-    public void setSupplier(String supplier) {
-        this.supplier = supplier;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public int getMinStock() {
-        return minStock;
-    }
-
-    public void setMinStock(int minStock) {
-        this.minStock = minStock;
-    }
+    public int getMinStock() { return minStock; }
+    public void setMinStock(int minStock) { this.minStock = minStock; }
 
     @Override
     public String toString() {
@@ -89,8 +67,12 @@ public class Accessory {
                 ", category='" + category + '\'' +
                 ", description='" + description + '\'' +
                 ", supplier='" + supplier + '\'' +
+                ", costPrice=" + costPrice +
+                ", sellingPrice=" + sellingPrice +
+                ", stock=" + stock +
                 ", imageUrl='" + imageUrl + '\'' +
                 ", minStock=" + minStock +
                 '}';
     }
 }
+
