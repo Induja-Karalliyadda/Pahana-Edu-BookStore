@@ -32,20 +32,21 @@ public class UserDAO {
         u.setAddress(rs.getString("address"));
         u.setTelephone(rs.getString("telephone"));
         u.setEmail(rs.getString("email"));
+        try { u.setRole(rs.getString("role")); } catch (SQLException ignore) {}
         return u;
     }
 
-    // 1) List all users
+    // 1) List all users (role=user)
     public List<User> findAllUsers() {
         List<User> list = new ArrayList<>();
         String sql = "SELECT * FROM users WHERE role='user' ORDER BY id";
-        
+
         System.out.println("Executing findAllUsers query: " + sql);
-        
+
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            
+
             int count = 0;
             while (rs.next()) {
                 User user = mapRow(rs);
@@ -54,7 +55,7 @@ public class UserDAO {
                 System.out.println("Found user: " + user.getUsername() + " (" + user.getCustomerCode() + ")");
             }
             System.out.println("Total users found: " + count);
-            
+
         } catch (SQLException ex) {
             System.err.println("Error in findAllUsers: " + ex.getMessage());
             ex.printStackTrace();
@@ -66,9 +67,9 @@ public class UserDAO {
     public List<User> searchUsers(String keyword) {
         List<User> list = new ArrayList<>();
         String sql = "SELECT * FROM users WHERE role='user' AND (username LIKE ? OR customer_code LIKE ?) ORDER BY id";
-        
+
         System.out.println("Executing searchUsers query with keyword: " + keyword);
-        
+
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
 
@@ -96,9 +97,9 @@ public class UserDAO {
     // 3) Update user
     public boolean updateUser(User u) {
         String sql = "UPDATE users SET username=?, address=?, telephone=?, email=? WHERE id=? AND role='user'";
-        
+
         System.out.println("Updating user: " + u.getId() + " - " + u.getUsername());
-        
+
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, u.getUsername());
@@ -106,11 +107,10 @@ public class UserDAO {
             ps.setString(3, u.getTelephone());
             ps.setString(4, u.getEmail());
             ps.setInt(5, u.getId());
-            
+
             int rowsAffected = ps.executeUpdate();
             boolean success = rowsAffected > 0;
             System.out.println("Update result: " + (success ? "SUCCESS" : "FAILED") + " (rows affected: " + rowsAffected + ")");
-            
             return success;
         } catch (SQLException ex) {
             System.err.println("Error in updateUser: " + ex.getMessage());
@@ -122,17 +122,15 @@ public class UserDAO {
     // 4) Delete user
     public boolean deleteUser(int id) {
         String sql = "DELETE FROM users WHERE id=? AND role='user'";
-        
+
         System.out.println("Deleting user with ID: " + id);
-        
+
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, id);
-            
             int rowsAffected = ps.executeUpdate();
             boolean success = rowsAffected > 0;
             System.out.println("Delete result: " + (success ? "SUCCESS" : "FAILED") + " (rows affected: " + rowsAffected + ")");
-            
             return success;
         } catch (SQLException ex) {
             System.err.println("Error in deleteUser: " + ex.getMessage());
@@ -141,40 +139,66 @@ public class UserDAO {
         }
     }
 
-    // 5) Register user
+    // 5) Register user (legacy) -> now uses createCustomer()
     public boolean registerUser(User u) {
-        String sql = """
-            INSERT INTO users (username, address, telephone, email, password, role, customer_code)
-            VALUES (?, ?, ?, ?, SHA2(?, 256), 'user', ?)
-        """;
-        
+        return createCustomer(u) != null;
+    }
+
+    // 6) Create customer and return created row (id + generated code)
+    // Default password = generated customer_code (hashed SHA2)
+    public User createCustomer(User u) {
+        String sql =
+            "INSERT INTO users (username, address, telephone, email, password, role, customer_code) " +
+            "VALUES (?, ?, ?, ?, SHA2(?, 256), 'user', ?)";
+
         System.out.println("Registering new user: " + u.getUsername());
-        
+
         try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             String newCode = nextCustomerCode(c);
             System.out.println("Generated customer code: " + newCode);
+
+            String defaultPwd = newCode; // default password = customer code
 
             ps.setString(1, u.getUsername());
             ps.setString(2, u.getAddress());
             ps.setString(3, u.getTelephone());
             ps.setString(4, u.getEmail());
-            ps.setString(5, u.getPassword());
+            ps.setString(5, defaultPwd);
             ps.setString(6, newCode);
 
-            boolean success = ps.executeUpdate() > 0;
-            System.out.println("Registration result: " + (success ? "SUCCESS" : "FAILED"));
-            
-            return success;
+            int affected = ps.executeUpdate();
+            if (affected == 0) {
+                System.err.println("Registration FAILED (no rows affected)");
+                return null;
+            }
+
+            int newId = 0;
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) newId = keys.getInt(1);
+            }
+
+            User created = new User();
+            created.setId(newId);
+            created.setUsername(u.getUsername());
+            created.setAddress(u.getAddress());
+            created.setTelephone(u.getTelephone());
+            created.setEmail(u.getEmail());
+            created.setRole("user");
+            created.setCustomerCode(newCode);
+
+            System.out.println("Registration SUCCESS. New ID: " + newId + ", Code: " + newCode);
+            return created;
+
         } catch (SQLException e) {
-            System.err.println("Error in registerUser: " + e.getMessage());
+            System.err.println("Error in createCustomer: " + e.getMessage());
             e.printStackTrace();
-            return false;
+            return null;
         }
     }
 
-    // Generate next customer code
+    // Generate next customer code like C006, C007...
     private String nextCustomerCode(Connection c) throws SQLException {
         String sql = "SELECT MAX(CAST(SUBSTRING(customer_code, 2) AS UNSIGNED)) FROM users WHERE role='user'";
         try (PreparedStatement ps = c.prepareStatement(sql);
@@ -184,16 +208,16 @@ public class UserDAO {
         }
     }
 
-    // 6) Login method
+    // 7) Login method
     public User getUserByEmailAndPassword(String idOrEmail, String pwd) {
         String sql = """
             SELECT * FROM users 
             WHERE (email = ? OR username = ?) 
               AND password = SHA2(?, 256)
         """;
-        
+
         System.out.println("Login attempt for: " + idOrEmail);
-        
+
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, idOrEmail);
@@ -210,7 +234,6 @@ public class UserDAO {
                     u.setTelephone(rs.getString("telephone"));
                     u.setEmail(rs.getString("email"));
                     u.setRole(rs.getString("role"));
-                    
                     System.out.println("Login successful for user: " + u.getUsername());
                     return u;
                 }
@@ -219,7 +242,6 @@ public class UserDAO {
             System.err.println("Error in getUserByEmailAndPassword: " + e.getMessage());
             e.printStackTrace();
         }
-        
         System.out.println("Login failed for: " + idOrEmail);
         return null;
     }

@@ -227,13 +227,15 @@
 </div>
 
 <script>
-  // (Paste all your JS for cart, modal, and customer search from before here!)
+  // Use JSTL to output the context path safely
+  const BASE = '<c:out value="${pageContext.request.contextPath}"/>';
+
   // -- Sidebar toggling
   const sidebar   = document.getElementById('sidebar');
   const overlay   = document.getElementById('overlay');
   const main      = document.getElementById('main');
   const toggleBtn = document.getElementById('toggleSidebar');
-  
+
   function toggleSidebarFn(){
     if(!sidebar) return;
     sidebar.classList.toggle('open');
@@ -245,57 +247,50 @@
 
   // -- Shopping cart logic
   let cart = [];
-  
+
   function updateCartTable() {
     const tbody = document.querySelector("#cartTable tbody");
     tbody.innerHTML = "";
     let total = 0;
-    
+
     if (cart.length === 0) {
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">Cart is empty</td></tr>';
       document.getElementById('cartTotal').textContent = '0.00';
       return;
     }
-    
-    cart.forEach((item, idx) => {
-      let itemTotal = item.price * item.qty;
+
+    cart.forEach(function(item, idx) {
+      var itemTotal = item.price * item.qty;
       total += itemTotal;
-      tbody.innerHTML += `
-        <tr>
-          <td>${item.name}</td>
-          <td>
-            <input type="number" min="1" max="${item.stock}" value="${item.qty}" 
-              data-idx="${idx}" class="cart-qty-input"/>
-          </td>
-          <td>${item.price.toFixed(2)}</td>
-          <td>${itemTotal.toFixed(2)}</td>
-          <td><button class="btn small remove-cart-btn" data-idx="${idx}">❌</button></td>
-        </tr>
-      `;
+      tbody.innerHTML += ''
+        + '<tr>'
+        +   '<td>' + item.name + '</td>'
+        +   '<td>'
+        +     '<input type="number" min="1" max="' + item.stock + '" value="' + item.qty + '" '
+        +       'data-idx="' + idx + '" class="cart-qty-input"/>'
+        +   '</td>'
+        +   '<td>' + item.price.toFixed(2) + '</td>'
+        +   '<td>' + itemTotal.toFixed(2) + '</td>'
+        +   '<td><button class="btn small remove-cart-btn" data-idx="' + idx + '">❌</button></td>'
+        + '</tr>';
     });
     document.getElementById('cartTotal').textContent = total.toFixed(2);
   }
-  
+
   // Add to cart
   document.addEventListener('click', function(e){
     if(e.target.classList.contains('add-cart-btn') && !e.target.disabled) {
-      const btn = e.target;
-      const type = btn.dataset.type;
-      const id = btn.dataset.id;
-      const stock = parseInt(btn.dataset.stock);
-      
-      if (stock <= 0) {
-        alert('This item is out of stock!');
-        return;
-      }
-      
-      let found = cart.find(i => i.type==type && i.id==id);
-      if(found) { 
-        if(found.qty < found.stock) {
-          found.qty++;
-        } else {
-          alert('Cannot add more than available stock!');
-        }
+      var btn = e.target;
+      var type = btn.dataset.type;
+      var id = btn.dataset.id;
+      var stock = parseInt(btn.dataset.stock, 10);
+
+      if (stock <= 0) { alert('This item is out of stock!'); return; }
+
+      var found = cart.find(function(i){ return i.type===type && i.id===id; });
+      if(found) {
+        if(found.qty < found.stock) found.qty++;
+        else alert('Cannot add more than available stock!');
       } else {
         cart.push({
           type: type,
@@ -308,18 +303,18 @@
       }
       updateCartTable();
     }
-    
+
     if(e.target.classList.contains('remove-cart-btn')) {
-      cart.splice(e.target.dataset.idx, 1); 
+      cart.splice(e.target.dataset.idx, 1);
       updateCartTable();
     }
   });
-  
-  // Update quantity in cart
+
+  // Update quantity
   document.addEventListener('input', function(e){
     if(e.target.classList.contains('cart-qty-input')) {
-      let idx = e.target.dataset.idx;
-      let val = parseInt(e.target.value);
+      var idx = e.target.dataset.idx;
+      var val = parseInt(e.target.value, 10);
       if(val < 1) val = 1;
       if(val > cart[idx].stock) val = cart[idx].stock;
       cart[idx].qty = val;
@@ -327,76 +322,71 @@
     }
   });
 
-  // Customer search
+  // ---- Customer search (uses context path) + debounce ----
+  var searchTimer = null;
   document.getElementById('customerSearch').addEventListener('input', function(){
-    const q = this.value.trim();
-    fetch('CustomerSearchController?q=' + encodeURIComponent(q))
-      .then(res => res.json())
-      .then(users => {
-        const sel = document.getElementById('customerSelect');
-        sel.innerHTML = '<option value="">-- Select Customer --</option>';
-        users.forEach(u => {
-          sel.innerHTML += `<option value="${u.id}" data-code="${u.customerCode}">${u.username} [${u.customerCode}]</option>`;
+    var q = this.value.trim();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () {
+      fetch(BASE + '/CustomerSearchController?q=' + encodeURIComponent(q) + '&_=' + Date.now())
+        .then(function(res){
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function(users){
+          var sel = document.getElementById('customerSelect');
+          sel.innerHTML = '<option value="">-- Select Customer --</option>';
+          (users || []).forEach(function(u){
+            var opt = document.createElement('option');
+            opt.value = u.id;
+            opt.dataset.code = u.customerCode;
+            opt.textContent = u.username + ' [' + u.customerCode + ']';
+            sel.appendChild(opt);
+          });
+        })
+        .catch(function(err){
+          console.error('Search error:', err);
         });
-      })
-      .catch(err => console.error('Search error:', err));
+    }, 250);
   });
 
-  // Place order
+  // Place order (also uses context path)
   document.getElementById('btnPlaceOrder').addEventListener('click', function(){
-    const customerSel = document.getElementById('customerSelect');
-    
-    if(cart.length == 0) { 
-      alert('Cart is empty! Please add items to cart.'); 
-      return; 
-    }
-    
-    if(!customerSel.value) { 
-      alert('Please select a customer or add a new one.'); 
-      return; 
-    }
-    
-    const customerId = customerSel.value;
-    const customerCode = customerSel.selectedOptions[0].dataset.code;
-    const customerName = customerSel.selectedOptions[0].textContent.split('[')[0].trim();
-    const total = parseFloat(document.getElementById('cartTotal').textContent);
-    
-    // Confirm order
-    if(!confirm(`Place order for ${customerName}?\nTotal: Rs. ${total.toFixed(2)}`)) {
-      return;
-    }
-    
-    fetch('OrderController', {
+    var customerSel = document.getElementById('customerSelect');
+
+    if(cart.length == 0) { alert('Cart is empty! Please add items to cart.'); return; }
+    if(!customerSel.value) { alert('Please select a customer or add a new one.'); return; }
+
+    var customerId = customerSel.value;
+    var customerCode = customerSel.selectedOptions[0].dataset.code;
+    var customerName = customerSel.selectedOptions[0].textContent.split('[')[0].trim();
+    var total = parseFloat(document.getElementById('cartTotal').textContent);
+
+    if(!confirm('Place order for ' + customerName + '?\nTotal: Rs. ' + total.toFixed(2))) return;
+
+    fetch(BASE + '/OrderController', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        customerId, 
-        customerCode, 
-        customerName, 
-        total,
-        cart: cart.map(i=>({
-          type: i.type, 
-          id: i.id, 
-          name: i.name,
-          qty: i.qty, 
-          price: i.price
-        }))
+        customerId: customerId,
+        customerCode: customerCode,
+        customerName: customerName,
+        total: total,
+        cart: cart.map(function(i){ return { type:i.type, id:i.id, name:i.name, qty:i.qty, price:i.price }; })
       })
     })
-    .then(r => r.json())
-    .then(res => {
+    .then(function(r){ return r.json(); })
+    .then(function(res){
       if(res.status === 'ok'){
         alert('Order placed successfully!\nInvoice Number: ' + res.invoiceNumber);
         cart = [];
         updateCartTable();
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        setTimeout(function(){ window.location.reload(); }, 1000);
       } else {
         alert('Error placing order: ' + (res.message || 'Unknown error'));
       }
     })
-    .catch(err => {
+    .catch(function(err){
       console.error('Order error:', err);
       alert('Error placing order. Please try again.');
     });
@@ -404,86 +394,74 @@
 
   // Clear cart
   document.getElementById('btnClearCart').addEventListener('click', function() {
-    if(cart.length > 0) {
-      if(confirm('Clear all items from cart?')) {
-        cart = [];
-        updateCartTable();
-      }
+    if(cart.length > 0 && confirm('Clear all items from cart?')) {
+      cart = [];
+      updateCartTable();
     }
   });
 
   // --- Add Customer Modal ---
-  const addCustomerBtn = document.getElementById('btnNewCustomer');
-  const addCustomerModal = document.getElementById('addCustomerModal');
-  const closeCustomerModal = document.getElementById('closeCustomerModal');
+  var addCustomerBtn = document.getElementById('btnNewCustomer');
+  var addCustomerModal = document.getElementById('addCustomerModal');
+  var closeCustomerModal = document.getElementById('closeCustomerModal');
 
-  addCustomerBtn.onclick = function() { 
+  addCustomerBtn.onclick = function() {
     addCustomerModal.classList.add('show');
     document.getElementById('newCustomerForm').reset();
-  }
-  
-  closeCustomerModal.onclick = function() { 
-    addCustomerModal.classList.remove('show');
-  }
-  
-  addCustomerModal.onclick = function(e) {
-    if (e.target === addCustomerModal) {
-      addCustomerModal.classList.remove('show');
-    }
   };
+  closeCustomerModal.onclick = function() { addCustomerModal.classList.remove('show'); };
+  addCustomerModal.onclick = function(e) { if (e.target === addCustomerModal) addCustomerModal.classList.remove('show'); };
 
   document.getElementById('newCustomerForm').onsubmit = function(e) {
     e.preventDefault();
-    
-    const name = document.getElementById('newCustomerName').value.trim();
-    const address = document.getElementById('newCustomerAddress').value.trim();
-    const telephone = document.getElementById('newCustomerTelephone').value.trim();
-    const email = document.getElementById('newCustomerEmail').value.trim();
-    
-    if (!name) {
-      alert('Customer name is required!');
-      return;
-    }
 
-    fetch('AddCustomerController', {
+    var name = document.getElementById('newCustomerName').value.trim();
+    var address = document.getElementById('newCustomerAddress').value.trim();
+    var telephone = document.getElementById('newCustomerTelephone').value.trim();
+    var email = document.getElementById('newCustomerEmail').value.trim();
+
+    if (!name) { alert('Customer name is required!'); return; }
+
+    fetch(BASE + '/AddCustomerController', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         username: name,
-        customerCode: '', // Will be auto-generated
         address: address,
         telephone: telephone,
         email: email
       })
     })
-    .then(res => res.json())
-    .then(cust => {
+    .then(function(res){ return res.json(); })
+    .then(function(cust){
       if (cust && cust.id) {
-        const sel = document.getElementById('customerSelect');
-        const opt = document.createElement('option');
+        var sel = document.getElementById('customerSelect');
+        var opt = document.createElement('option');
         opt.value = cust.id;
         opt.dataset.code = cust.customerCode;
-        opt.textContent = `${cust.username} [${cust.customerCode}]`;
+        opt.textContent = cust.username + ' [' + cust.customerCode + ']';
         sel.appendChild(opt);
         sel.value = cust.id;
-        
+
         addCustomerModal.classList.remove('show');
         document.getElementById('newCustomerForm').reset();
-        
+
         alert('Customer added successfully!\nCustomer Code: ' + cust.customerCode);
       } else {
         alert('Failed to add customer: ' + (cust.error || 'Unknown error'));
       }
     })
-    .catch(err => {
+    .catch(function(err){
       console.error('Add customer error:', err);
       alert('Failed to add customer. Please try again.');
     });
   };
-  
+
   // Initialize cart display
   updateCartTable();
 </script>
+
+
       <!-- Shopping Cart Section (as you had before) -->
       <!-- ... (the rest of your shopping cart, JS, and modal code as previously shown) ... -->
       <!-- Just copy the cart panel/modal/scripts from your previous working JSP here -->

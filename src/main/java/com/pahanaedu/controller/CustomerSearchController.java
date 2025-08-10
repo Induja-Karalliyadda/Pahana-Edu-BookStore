@@ -13,27 +13,29 @@ import java.util.List;
 
 @WebServlet("/CustomerSearchController")
 public class CustomerSearchController extends HttpServlet {
-    private Gson gson = new Gson();
-    
+    private static final long serialVersionUID = 1L;
+    private final Gson gson = new Gson();
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
+        response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
-        PrintWriter out = response.getWriter();
-        
-        try {
-            String query = request.getParameter("q");
-            if (query == null) query = "";
-            
+
+        String query = request.getParameter("q");
+        if (query == null) query = "";
+        query = query.trim();
+
+        try (PrintWriter out = response.getWriter()) {
             UserDAO userDao = new UserDAO();
             List<User> customers = userDao.searchUsers(query);
-            
             out.print(gson.toJson(customers));
-            
         } catch (Exception e) {
             e.printStackTrace();
-            out.print("[]");
+            try (PrintWriter out = response.getWriter()) {
+                out.print("[]");
+            }
         }
     }
 }
