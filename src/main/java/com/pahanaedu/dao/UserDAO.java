@@ -1,8 +1,10 @@
 package com.pahanaedu.dao;
 
 import com.pahanaedu.model.User;
+
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDAO {
     private static final String URL  = "jdbc:mysql://localhost:3306/pahana_edu_book_store";
@@ -36,17 +38,15 @@ public class UserDAO {
         return u;
     }
 
-    // 1) List all users (role=user)
+    // -------- READS --------
+
     public List<User> findAllUsers() {
         List<User> list = new ArrayList<>();
         String sql = "SELECT * FROM users WHERE role='user' ORDER BY id";
-
         System.out.println("Executing findAllUsers query: " + sql);
-
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-
             int count = 0;
             while (rs.next()) {
                 User user = mapRow(rs);
@@ -55,7 +55,6 @@ public class UserDAO {
                 System.out.println("Found user: " + user.getUsername() + " (" + user.getCustomerCode() + ")");
             }
             System.out.println("Total users found: " + count);
-
         } catch (SQLException ex) {
             System.err.println("Error in findAllUsers: " + ex.getMessage());
             ex.printStackTrace();
@@ -63,20 +62,15 @@ public class UserDAO {
         return list;
     }
 
-    // 2) Search users by username or customer code
     public List<User> searchUsers(String keyword) {
         List<User> list = new ArrayList<>();
         String sql = "SELECT * FROM users WHERE role='user' AND (username LIKE ? OR customer_code LIKE ?) ORDER BY id";
-
         System.out.println("Executing searchUsers query with keyword: " + keyword);
-
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-
             String pat = "%" + keyword + "%";
             ps.setString(1, pat);
             ps.setString(2, pat);
-
             try (ResultSet rs = ps.executeQuery()) {
                 int count = 0;
                 while (rs.next()) {
@@ -94,12 +88,9 @@ public class UserDAO {
         return list;
     }
 
-    // 3) Update user
     public boolean updateUser(User u) {
         String sql = "UPDATE users SET username=?, address=?, telephone=?, email=? WHERE id=? AND role='user'";
-
         System.out.println("Updating user: " + u.getId() + " - " + u.getUsername());
-
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, u.getUsername());
@@ -107,7 +98,6 @@ public class UserDAO {
             ps.setString(3, u.getTelephone());
             ps.setString(4, u.getEmail());
             ps.setInt(5, u.getId());
-
             int rowsAffected = ps.executeUpdate();
             boolean success = rowsAffected > 0;
             System.out.println("Update result: " + (success ? "SUCCESS" : "FAILED") + " (rows affected: " + rowsAffected + ")");
@@ -119,12 +109,9 @@ public class UserDAO {
         }
     }
 
-    // 4) Delete user
     public boolean deleteUser(int id) {
         String sql = "DELETE FROM users WHERE id=? AND role='user'";
-
         System.out.println("Deleting user with ID: " + id);
-
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -139,91 +126,22 @@ public class UserDAO {
         }
     }
 
-    // 5) Register user (legacy) -> now uses createCustomer()
     public boolean registerUser(User u) {
         return createCustomer(u) != null;
     }
 
-    // 6) Create customer and return created row (id + generated code)
-    // Default password = generated customer_code (hashed SHA2)
-    public User createCustomer(User u) {
-        String sql =
-            "INSERT INTO users (username, address, telephone, email, password, role, customer_code) " +
-            "VALUES (?, ?, ?, ?, SHA2(?, 256), 'user', ?)";
-
-        System.out.println("Registering new user: " + u.getUsername());
-
-        try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            String newCode = nextCustomerCode(c);
-            System.out.println("Generated customer code: " + newCode);
-
-            String defaultPwd = newCode; // default password = customer code
-
-            ps.setString(1, u.getUsername());
-            ps.setString(2, u.getAddress());
-            ps.setString(3, u.getTelephone());
-            ps.setString(4, u.getEmail());
-            ps.setString(5, defaultPwd);
-            ps.setString(6, newCode);
-
-            int affected = ps.executeUpdate();
-            if (affected == 0) {
-                System.err.println("Registration FAILED (no rows affected)");
-                return null;
-            }
-
-            int newId = 0;
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) newId = keys.getInt(1);
-            }
-
-            User created = new User();
-            created.setId(newId);
-            created.setUsername(u.getUsername());
-            created.setAddress(u.getAddress());
-            created.setTelephone(u.getTelephone());
-            created.setEmail(u.getEmail());
-            created.setRole("user");
-            created.setCustomerCode(newCode);
-
-            System.out.println("Registration SUCCESS. New ID: " + newId + ", Code: " + newCode);
-            return created;
-
-        } catch (SQLException e) {
-            System.err.println("Error in createCustomer: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    // Generate next customer code like C006, C007...
-    private String nextCustomerCode(Connection c) throws SQLException {
-        String sql = "SELECT MAX(CAST(SUBSTRING(customer_code, 2) AS UNSIGNED)) FROM users WHERE role='user'";
-        try (PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            int max = rs.next() ? rs.getInt(1) : 0;
-            return String.format("C%03d", max + 1);
-        }
-    }
-
-    // 7) Login method
     public User getUserByEmailAndPassword(String idOrEmail, String pwd) {
         String sql = """
-            SELECT * FROM users 
-            WHERE (email = ? OR username = ?) 
+            SELECT * FROM users
+            WHERE (email = ? OR username = ?)
               AND password = SHA2(?, 256)
         """;
-
         System.out.println("Login attempt for: " + idOrEmail);
-
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, idOrEmail);
             ps.setString(2, idOrEmail);
             ps.setString(3, pwd);
-
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     User u = new User();
@@ -245,4 +163,106 @@ public class UserDAO {
         System.out.println("Login failed for: " + idOrEmail);
         return null;
     }
+
+    // -------- HELPERS --------
+
+    private User findByEmailOrUsername(Connection c, String email, String username) throws SQLException {
+        String sql = "SELECT id, username, address, telephone, email, role, customer_code " +
+                     "FROM users WHERE (email=? OR username=?) AND role='user' LIMIT 1";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setString(2, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User u = new User();
+                    u.setId(rs.getInt("id"));
+                    u.setUsername(rs.getString("username"));
+                    u.setAddress(rs.getString("address"));
+                    u.setTelephone(rs.getString("telephone"));
+                    u.setEmail(rs.getString("email"));
+                    u.setRole(rs.getString("role"));
+                    u.setCustomerCode(rs.getString("customer_code"));
+                    return u;
+                }
+            }
+        }
+        return null;
+    }
+
+    // -------- CREATE (single, canonical version) --------
+
+    public User createCustomer(User u) {
+        final String insertSql =
+            "INSERT INTO users (username,address,telephone,email,password,role,customer_code) " +
+            "VALUES (?,?,?,?,SHA2(?,256),'user',?)";
+
+        try (Connection c = getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                // 1) Prevent duplicates by email/username
+                User exists = findByEmailOrUsername(c, u.getEmail(), u.getUsername());
+                if (exists != null) {
+                    c.rollback();
+                    System.out.println("createCustomer: duplicate email/username, aborting.");
+                    return null;
+                }
+
+                // 2) Generate next code safely (gap-free while we hold the lock)
+                String nextCode;
+                try (PreparedStatement ps = c.prepareStatement(
+                         "SELECT LPAD(COALESCE(MAX(CAST(SUBSTRING(customer_code,2) AS UNSIGNED)),0) + 1, 3, '0') " +
+                         "FROM users FOR UPDATE");
+                     ResultSet rs = ps.executeQuery()) {
+                    rs.next();
+                    nextCode = "C" + rs.getString(1);
+                }
+                String defaultPwd = nextCode; // rule: temp password = code
+
+                // 3) Insert row
+                int newId;
+                try (PreparedStatement ps = c.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setString(1, u.getUsername());
+                    ps.setString(2, u.getAddress());
+                    ps.setString(3, u.getTelephone());
+                    ps.setString(4, u.getEmail());
+                    ps.setString(5, defaultPwd);
+                    ps.setString(6, nextCode);
+                    ps.executeUpdate();
+                    try (ResultSet keys = ps.getGeneratedKeys()) {
+                        keys.next();
+                        newId = keys.getInt(1);
+                    }
+                }
+
+                c.commit();
+
+                User created = new User();
+                created.setId(newId);
+                created.setUsername(u.getUsername());
+                created.setAddress(u.getAddress());
+                created.setTelephone(u.getTelephone());
+                created.setEmail(u.getEmail());
+                created.setRole("user");
+                created.setCustomerCode(nextCode);
+                created.setTempPassword(defaultPwd); // expose to controller for email
+                System.out.println("Registration SUCCESS. New ID: " + newId + ", Code: " + nextCode);
+                return created;
+
+            } catch (SQLIntegrityConstraintViolationException dup) {
+                c.rollback();
+                System.out.println("createCustomer: unique constraint violation.");
+                return null;
+            } catch (SQLException e) {
+                c.rollback();
+                throw e;
+            } finally {
+                c.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in createCustomer: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
+

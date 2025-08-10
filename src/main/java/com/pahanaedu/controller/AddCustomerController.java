@@ -2,11 +2,15 @@ package com.pahanaedu.controller;
 
 import com.pahanaedu.dao.UserDAO;
 import com.pahanaedu.model.User;
+import com.pahanaedu.util.EmailTemplate;
+import com.pahanaedu.util.Mailer;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -40,20 +44,34 @@ public class AddCustomerController extends HttpServlet {
             payload.setAddress(address);
             payload.setTelephone(telephone);
             payload.setEmail(email);
-            // DO NOT set password here; DAO will set default = generated customer_code
             payload.setRole("user");
 
             UserDAO dao = new UserDAO();
-            User created = dao.createCustomer(payload); // returns id + generated customer_code
+            User created = dao.createCustomer(payload); // returns id + customer_code + tempPassword
 
             if (created != null && created.getId() > 0) {
+                boolean emailQueued = false;
+
+                if (email != null && !email.isBlank()) {
+                    String html = EmailTemplate.welcome(
+                            created.getUsername(),
+                            created.getCustomerCode(),
+                            created.getTempPassword() // same as customer code in your setup
+                    );
+                    // send non-blocking; see Tomcat logs for JavaMail DEBUG output
+                    Mailer.sendHtmlAsync(email, "Welcome to Pahana Edu Bookshop", html);
+                    emailQueued = true;
+                }
+
                 JsonObject res = new JsonObject();
                 res.addProperty("id", created.getId());
                 res.addProperty("username", created.getUsername());
                 res.addProperty("customerCode", created.getCustomerCode());
+                res.addProperty("tempPassword", created.getTempPassword());
                 res.addProperty("address", created.getAddress());
                 res.addProperty("telephone", created.getTelephone());
                 res.addProperty("email", created.getEmail());
+                res.addProperty("emailQueued", emailQueued);
                 out.print(res.toString());
             } else {
                 out.print("{\"error\":\"Failed to add customer\"}");
@@ -64,4 +82,5 @@ public class AddCustomerController extends HttpServlet {
         }
     }
 }
+
 
