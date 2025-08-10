@@ -19,6 +19,56 @@ public class ItemDAO {
             System.err.println("JDBC Driver load failed: " + e.getMessage());
         }
     }
+ // Add these in ItemDAO:
+
+    public List<Book> getAllBooks() {
+        List<Book> books = new ArrayList<>();
+        String sql = "SELECT * FROM books ORDER BY book_id";
+        try (Connection c = DriverManager.getConnection(URL, USER, PASS);
+             PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while(rs.next()) {
+                Book b = new Book();
+                b.setBookId(rs.getInt("book_id"));
+                b.setTitle(rs.getString("title"));
+                b.setAuthor(rs.getString("author"));
+                b.setCategory(rs.getString("category"));
+                b.setDescription(rs.getString("description"));
+                b.setSupplier(rs.getString("supplier"));
+                b.setCostPrice(rs.getDouble("cost_price"));
+                b.setSellingPrice(rs.getDouble("selling_price"));
+                b.setStock(rs.getInt("stock"));
+                b.setImageUrl(rs.getString("image_url"));
+                b.setMinStock(rs.getInt("min_stock"));
+                books.add(b);
+            }
+        } catch(Exception e) { e.printStackTrace(); }
+        return books;
+    }
+
+    public List<Accessory> getAllAccessories() {
+        List<Accessory> accs = new ArrayList<>();
+        String sql = "SELECT * FROM accessories ORDER BY accessory_id";
+        try (Connection c = DriverManager.getConnection(URL, USER, PASS);
+             PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while(rs.next()) {
+                Accessory a = new Accessory();
+                a.setAccessoryId(rs.getInt("accessory_id"));
+                a.setName(rs.getString("name"));
+                a.setCategory(rs.getString("category"));
+                a.setDescription(rs.getString("description"));
+                a.setSupplier(rs.getString("supplier"));
+                a.setCostPrice(rs.getDouble("cost_price"));
+                a.setSellingPrice(rs.getDouble("selling_price"));
+                a.setStock(rs.getInt("stock"));
+                a.setImageUrl(rs.getString("image_url"));
+                a.setMinStock(rs.getInt("min_stock"));
+                accs.add(a);
+            }
+        } catch(Exception e) { e.printStackTrace(); }
+        return accs;
+    }
 
     // BOOKS
     public List<Book> findBooks(String titlePattern, String categoryFilter) throws SQLException {

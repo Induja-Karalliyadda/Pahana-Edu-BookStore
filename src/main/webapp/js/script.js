@@ -1,22 +1,37 @@
-document.addEventListener('DOMContentLoaded', function() {
-  var btn = document.getElementById('login-signup-btn');
-  if (btn) {
-    btn.addEventListener('click', function() {
-      // First load the login page (as per your requirement)
-      window.location.href = 'view/login.jsp';
-    });
-  }
-});
+/* ================= SIDEBAR TOGGLE ================= */
+const sidebar   = document.getElementById('sidebar');
+const overlay   = document.getElementById('overlay');
+const toggleBtn = document.getElementById('toggleSidebar');
+const main      = document.getElementById('main');
+
+function toggleSidebarFn(){
+  if(!sidebar) return;
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('show');
+  main.classList.toggle('shift');
+}
+toggleBtn && toggleBtn.addEventListener('click', toggleSidebarFn);
+overlay   && overlay.addEventListener('click', toggleSidebarFn);
+
+
 /* ================= STAFF PAGE LOGIC ================= */
-function openEditModal(id, name, username, email, tel){
+function openEditModal(id, username, address, email, telephone) {
+  // 1) Update modal for “Edit”
   document.getElementById('modalTitle').textContent = 'Update Staff';
-  document.getElementById('f-action').value = 'update';
-  document.getElementById('f-id').value = id;
-  document.getElementById('f-name').value = name;
-  document.getElementById('f-username').value = username;
-  document.getElementById('f-email').value = email;
-  document.getElementById('f-telephone').value = tel;
-  document.getElementById('pwRow').style.display = 'none'; // hide password on update
+  // 2) Must match your servlet’s check: else if("edit".equals(action))
+  document.getElementById('f-action').value    = 'edit';
+  document.getElementById('f-id').value        = id;
+
+  // 3) Fill in the correct fields (no f-name, but f-address exists)
+  document.getElementById('f-username').value  = username;
+  document.getElementById('f-address').value   = address;
+  document.getElementById('f-email').value     = email;
+  document.getElementById('f-telephone').value = telephone;
+
+  // 4) Hide password row when editing
+  document.getElementById('pwRow').style.display = 'none';
+
+  // 5) Show the modal
   document.getElementById('modal').classList.add('show');
 }
 
@@ -24,13 +39,17 @@ const btnAddStaffEl = document.getElementById('btnAddStaff');
 const cancelBtnEl   = document.getElementById('cancelBtn');
 const modalEl       = document.getElementById('modal');
 
-btnAddStaffEl && btnAddStaffEl.addEventListener('click', ()=>{
+// “Add Staff” button opens a fresh form
+btnAddStaffEl && btnAddStaffEl.addEventListener('click', () => {
   document.getElementById('modalTitle').textContent = 'Add Staff';
-  document.getElementById('f-action').value = 'add';
+  document.getElementById('f-action').value        = 'add';
   document.getElementById('staffForm').reset();
-  document.getElementById('pwRow').style.display = 'block';
+  document.getElementById('pwRow').style.display   = 'block';
   modalEl.classList.add('show');
 });
-cancelBtnEl && cancelBtnEl.addEventListener('click', ()=> modalEl.classList.remove('show'));
-modalEl && modalEl.addEventListener('click', e=>{ if(e.target===modalEl) modalEl.classList.remove('show'); });
 
+// Cancel / backdrop click closes it
+cancelBtnEl && cancelBtnEl.addEventListener('click', () => modalEl.classList.remove('show'));
+modalEl     && modalEl.addEventListener('click', e => {
+  if (e.target === modalEl) modalEl.classList.remove('show');
+});

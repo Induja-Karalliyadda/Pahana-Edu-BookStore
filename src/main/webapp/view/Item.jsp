@@ -172,13 +172,110 @@
 
         <!-- Book Fields -->
         <div id="bookFields" class="${mainCategory != 'book' ? 'hidden' : ''}">
-          <!-- ... (same book fields as before) ... -->
-          <!-- keep all the inner form-group markup unchanged -->
+          <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" name="title" id="title" required value="${not empty editBook ? editBook.title : ''}" />
+          </div>
+          <div class="form-group">
+            <label for="author">Author</label>
+            <input type="text" name="author" id="author" required value="${not empty editBook ? editBook.author : ''}" />
+          </div>
+          <div class="form-group">
+            <label for="bookSub">Category</label>
+            <select name="bookSub" id="bookSub" required>
+              <option value="">Select Category</option>
+              <c:forEach var="cat" items="${bookCategories}">
+                <option value="${cat}" <c:if test="${not empty editBook and editBook.category == cat}">selected</c:if>>${cat}</option>
+              </c:forEach>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="descriptionBook">Description</label>
+            <textarea name="descriptionBook" id="descriptionBook" rows="3">${not empty editBook ? editBook.description : ''}</textarea>
+          </div>
+          <div class="form-group">
+            <label for="supplierBook">Supplier</label>
+            <input type="text" name="supplierBook" id="supplierBook" value="${not empty editBook ? editBook.supplier : ''}" />
+          </div>
+          <div class="form-group">
+            <label for="costPriceBook">Cost Price</label>
+            <input type="number" step="0.01" name="costPriceBook" id="costPriceBook" value="${not empty editBook ? editBook.costPrice : '0'}" />
+          </div>
+          <div class="form-group">
+            <label for="sellingPriceBook">Selling Price</label>
+            <input type="number" step="0.01" name="sellingPriceBook" id="sellingPriceBook" value="${not empty editBook ? editBook.sellingPrice : '0'}" />
+          </div>
+          <div class="form-group">
+            <label for="stockBook">Stock</label>
+            <input type="number" name="stockBook" id="stockBook" value="${not empty editBook ? editBook.stock : '0'}" />
+          </div>
+          <div class="form-group">
+            <label for="minStockBook">Min Stock</label>
+            <input type="number" name="minStockBook" id="minStockBook" value="${not empty editBook ? editBook.minStock : '0'}" />
+          </div>
+          <div class="form-group">
+            <label for="imgBook">Image</label>
+            <input type="file" name="imgBook" id="imgBook" accept="image/*" />
+            <div id="newBookPreviewContainer" style="display: none;">
+              <img id="newBookPreview" class="preview-img" src="#" alt="New Book Preview" />
+            </div>
+            <c:if test="${not empty editBook and not empty editBook.imageUrl}">
+              <div class="small-note">Current Image:</div>
+              <img class="preview-img" src="<c:url value='/${editBook.imageUrl}'/>" alt="Existing Book Image" />
+            </c:if>
+          </div>
         </div>
 
         <!-- Accessory Fields -->
         <div id="accessoryFields" class="${mainCategory != 'accessory' ? 'hidden' : ''}">
-          <!-- ... (same accessory fields as before) ... -->
+          <div class="form-group">
+            <label for="itemName">Name</label>
+            <input type="text" name="itemName" id="itemName" required value="${not empty editAccessory ? editAccessory.name : ''}" />
+          </div>
+          <div class="form-group">
+            <label for="accSub">Category</label>
+            <select name="accSub" id="accSub" required>
+              <option value="">Select Category</option>
+              <c:forEach var="cat" items="${accessoryCategories}">
+                <option value="${cat}" <c:if test="${not empty editAccessory and editAccessory.category == cat}">selected</c:if>>${cat}</option>
+              </c:forEach>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="descriptionAcc">Description</label>
+            <textarea name="descriptionAcc" id="descriptionAcc" rows="3">${not empty editAccessory ? editAccessory.description : ''}</textarea>
+          </div>
+          <div class="form-group">
+            <label for="supplierAcc">Supplier</label>
+            <input type="text" name="supplierAcc" id="supplierAcc" value="${not empty editAccessory ? editAccessory.supplier : ''}" />
+          </div>
+          <div class="form-group">
+            <label for="costPriceAcc">Cost Price</label>
+            <input type="number" step="0.01" name="costPriceAcc" id="costPriceAcc" value="${not empty editAccessory ? editAccessory.costPrice : '0'}" />
+          </div>
+          <div class="form-group">
+            <label for="sellingPriceAcc">Selling Price</label>
+            <input type="number" step="0.01" name="sellingPriceAcc" id="sellingPriceAcc" value="${not empty editAccessory ? editAccessory.sellingPrice : '0'}" />
+          </div>
+          <div class="form-group">
+            <label for="stockAcc">Stock</label>
+            <input type="number" name="stockAcc" id="stockAcc" value="${not empty editAccessory ? editAccessory.stock : '0'}" />
+          </div>
+          <div class="form-group">
+            <label for="minStockAcc">Min Stock</label>
+            <input type="number" name="minStockAcc" id="minStockAcc" value="${not empty editAccessory ? editAccessory.minStock : '0'}" />
+          </div>
+          <div class="form-group">
+            <label for="imgAcc">Image</label>
+            <input type="file" name="imgAcc" id="imgAcc" accept="image/*" />
+            <div id="newAccPreviewContainer" style="display: none;">
+              <img id="newAccPreview" class="preview-img" src="#" alt="New Accessory Preview" />
+            </div>
+            <c:if test="${not empty editAccessory and not empty editAccessory.imageUrl}">
+              <div class="small-note">Current Image:</div>
+              <img class="preview-img" src="<c:url value='/${editAccessory.imageUrl}'/>" alt="Existing Accessory Image" />
+            </c:if>
+          </div>
         </div>
 
         <button type="submit" id="submitBtn" class="btn" style="width:100%; margin-top:10px;">
@@ -437,12 +534,11 @@
         reader.readAsDataURL(file);
       });
     }
-    previewFile(document.getElementById('imgBookInput'), 'newBookPreview', 'newBookPreviewContainer');
-    previewFile(document.getElementById('imgAccInput'), 'newAccPreview', 'newAccPreviewContainer');
+    previewFile(document.getElementById('imgBookInput') || document.getElementById('imgBook'), 'newBookPreview', 'newBookPreviewContainer');
+    previewFile(document.getElementById('imgAccInput') || document.getElementById('imgAcc'), 'newAccPreview', 'newAccPreviewContainer');
   </script>
 </body>
 </html>
-
 
 
   

@@ -39,20 +39,21 @@
     <section class="staff-header">
       <h1>Staff Management</h1>
       <div class="staff-actions">
-        <span class="badge" id="staffCount">${empty staffList ? 0 : staffList.size()}</span>
+        <span class="badge" id="staffCount">
+          ${empty staffList ? 0 : staffList.size()}
+        </span>
         <button id="btnAddStaff" class="btn primary">+ Add Staff</button>
       </div>
     </section>
 
-    <!-- Error Message Display -->
+    <!-- Error Message -->
     <c:if test="${not empty errorMessage}">
-      <div style="background-color: #ffebee; color: #c62828; padding: 10px; margin: 10px 0; border-radius: 4px; border-left: 4px solid #c62828;">
+      <div class="error-box">
         <strong>Error:</strong> ${errorMessage}
       </div>
     </c:if>
 
- 
-
+    <!-- STAFF TABLE -->
     <section class="table-wrap">
       <table class="table" id="staffTable">
         <thead>
@@ -69,13 +70,13 @@
           <c:choose>
             <c:when test="${empty staffList}">
               <tr>
-                <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
-                  No staff members found. Click "Add Staff" to create the first staff member.
+                <td colspan="6" class="no-data">
+                  No staff members found. Click "Add Staff" to create one.
                 </td>
               </tr>
             </c:when>
             <c:otherwise>
-              <c:forEach var="s" items="${staffList}" varStatus="i">
+              <c:forEach var="s" items="${staffList}">
                 <tr>
                   <td>${s.customerCode}</td>
                   <td>${s.username}</td>
@@ -83,13 +84,23 @@
                   <td>${s.email}</td>
                   <td>${s.telephone}</td>
                   <td>
-                    <form action="${pageContext.request.contextPath}/staff" method="post" style="display:inline;">
+                    <form action="${pageContext.request.contextPath}/staff"
+                          method="post" style="display:inline">
                       <input type="hidden" name="action" value="delete" />
                       <input type="hidden" name="id" value="${s.id}" />
-                      <button class="btn small" onclick="return confirm('Delete this staff member?')">Delete</button>
+                      <button class="btn small"
+                              onclick="return confirm('Delete this staff member?')">
+                        Delete
+                      </button>
                     </form>
-                    <button class="btn small" 
-                            onclick="openEditModal('${s.id}','${s.username}','${s.address}','${s.email}','${s.telephone}')">
+                    <button class="btn small"
+                            onclick="openEditModal(
+                              '${s.id}',
+                              '${s.username}',
+                              '${s.address}',
+                              '${s.email}',
+                              '${s.telephone}'
+                            )">
                       Edit
                     </button>
                   </td>
@@ -102,7 +113,7 @@
     </section>
   </main>
 
-  <!-- MODAL FOR ADD/EDIT -->
+  <!-- ADD / EDIT MODAL -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <h2 id="modalTitle">Add Staff</h2>
@@ -139,13 +150,52 @@
     </div>
   </div>
 
+  <!-- EXTERNAL JS -->
   <script src="${pageContext.request.contextPath}/js/admin.js" defer></script>
-  
-  <!-- Debug JavaScript -->
-  <script>
-    console.log('Staff page loaded');
-    console.log('Staff count:', document.getElementById('staffCount').textContent);
-    console.log('Table rows:', document.querySelectorAll('#staffTable tbody tr').length);
-  </script>
 </body>
 </html>
+
+
+  <!-- ADD / EDIT MODAL -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h2 id="modalTitle">Add Staff</h2>
+      <form id="staffForm" action="${pageContext.request.contextPath}/staff" method="post">
+        <input type="hidden" name="action" id="f-action" value="add" />
+        <input type="hidden" name="id" id="f-id" />
+
+        <div class="form-group">
+          <label for="f-username">Username</label>
+          <input type="text" name="username" id="f-username" required />
+        </div>
+        <div class="form-group">
+          <label for="f-address">Address</label>
+          <input type="text" name="address" id="f-address" required />
+        </div>
+        <div class="form-group">
+          <label for="f-email">Email</label>
+          <input type="email" name="email" id="f-email" required />
+        </div>
+        <div class="form-group">
+          <label for="f-telephone">Telephone</label>
+          <input type="text" name="telephone" id="f-telephone" required />
+        </div>
+        <div class="form-group" id="pwRow">
+          <label for="f-password">Password</label>
+          <input type="password" name="password" id="f-password" required />
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Save</button>
+          <button type="button" class="btn" id="cancelBtn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- EXTERNAL JS -->
+  <script src="${pageContext.request.contextPath}/js/admin.js" defer></script>
+</body>
+</html>
+
+

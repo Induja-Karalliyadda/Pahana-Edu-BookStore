@@ -31,7 +31,7 @@ public class LoginController extends HttpServlet {
 
         switch (user.getRole().toLowerCase()) {
             case "admin":
-                resp.sendRedirect(req.getContextPath() + "/view/AdminDashboard.jsp");
+                resp.sendRedirect(req.getContextPath() + "/AdminPOSController");
                 break;
             case "staff":
                 resp.sendRedirect(req.getContextPath() + "/view/StaffDashboard.jsp");
