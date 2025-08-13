@@ -84,7 +84,9 @@
       <a href="${pageContext.request.contextPath}/staff">Staff</a>
       <a href="#">Reports</a>
       <a href="#">Settings</a>
-      <a href="${pageContext.request.contextPath}/LogoutServlet" class="logout">Logout</a>
+      <a href="${pageContext.request.contextPath}/logout" class="logout">Logout</a>
+      
+      
     </nav>
   </aside>
   <div id="overlay" class="overlay" style="display:none;"></div>

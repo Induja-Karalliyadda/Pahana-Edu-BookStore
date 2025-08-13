@@ -86,7 +86,8 @@
       <c:url var="itemsBookUrl" value="/items"><c:param name="mainCategory" value="book"/></c:url>
       <c:url var="usersUrl" value="/users"/>
       <c:url var="staffUrl" value="/staff"/>
-      <c:url var="logoutUrl" value="/LogoutServlet"/>
+      <c:url var="logoutUrl" value="/logout"/>
+      
       <a href="${dashboardUrl}">Dashboard</a>
       <a href="#">Orders</a>
       <a href="${itemsBookUrl}" class="active">Item</a>

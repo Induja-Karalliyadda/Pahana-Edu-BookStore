@@ -41,24 +41,41 @@
   <div class="top-actions">
     <button id="toggleSidebar" aria-label="menu">&#9776;</button>
   </div>
-  <div class="brand">Pahana Edu <span>Admin POS</span></div>
+  <div class="brand">Pahana Edu <span> POS</span></div>
   <img src="${pageContext.request.contextPath}/img/avatar.png" alt="Admin" class="avatar">
 </header>
 
-<aside id="sidebar" class="sidebar">
-  <nav>
-    <h4 class="menu-title">Menu</h4>
-    <a href="${pageContext.request.contextPath}/AdminPOSController">Dashboard</a>
-    <a href="#" class="active">POS</a>
-    <a href="${pageContext.request.contextPath}/items">Items</a>
-    <a href="${pageContext.request.contextPath}/Users.jsp">Users</a>
-    <a href="${pageContext.request.contextPath}/Staff.jsp">Staff</a>
-    <a href="#">Reports</a>
-    <a href="#">Settings</a>
-    <a href="${pageContext.request.contextPath}/LogoutServlet" class="logout">Logout</a>
-  </nav>
-</aside>
+ <!-- SIDEBAR -->
+  <aside id="sidebar" class="sidebar">
+    <nav>
+      <h4 class="menu-title">Menu</h4>
+      <c:url var="dashboardUrl" value="/AdminPOSController"/>
+      <c:url var="itemsBookUrl" value="/items"><c:param name="mainCategory" value="book"/></c:url>
+      <c:url var="usersUrl" value="/users"/>
+      <c:url var="staffUrl" value="/staff"/>
+      <c:url var="logoutUrl" value="/logout"/>
 
+      <a href="${dashboardUrl}">Dashboard</a>
+      <a href="#">Orders</a>
+      <a href="${itemsBookUrl}" class="active">Item</a>
+      <a href="${usersUrl}">Users</a>
+
+      <!-- Show Staff link only for Admin -->
+      <c:if test="${sessionScope.role == 'admin'}">
+        <a href="${staffUrl}">Staff</a>
+      </c:if>
+      
+      <a href="#">Reports</a>
+      <a href="#">Settings</a>
+      <a href="${logoutUrl}" class="logout">Logout</a>
+    </nav>
+  </aside>
+
+  
+  
+  
+  
+  
 <div class="overlay" id="overlay"></div>
 
 <div class="main" id="main">
@@ -244,6 +261,7 @@
     });
     document.getElementById('cartTotal').textContent = total.toFixed(2);
   }
+
   document.addEventListener('click', function(e){
     if(e.target.classList.contains('add-cart-btn') && !e.target.disabled) {
       var btn = e.target, type = btn.dataset.type, id = btn.dataset.id, stock = parseInt(btn.dataset.stock, 10);
@@ -255,6 +273,7 @@
     }
     if(e.target.classList.contains('remove-cart-btn')) { cart.splice(e.target.dataset.idx, 1); updateCartTable(); }
   });
+
   document.addEventListener('input', function(e){
     if(e.target.classList.contains('cart-qty-input')) {
       var idx = e.target.dataset.idx, val = parseInt(e.target.value, 10);
@@ -285,7 +304,46 @@
     }, 250);
   });
 
-  // Place order -> show invoice button AND open PDF
+  // === LIVE STOCK REFRESH (single version) ===
+  function updateDOMStock(type, id, newStock, minStock){
+    const btn = document.querySelector(`.add-cart-btn[data-type="${type}"][data-id="${id}"]`);
+    if(!btn) return;
+
+    btn.dataset.stock = String(newStock);
+
+    const row = btn.closest('tr');
+    if (row) {
+      const stockCell = row.children[2]; // 3rd column
+      if (stockCell) {
+        stockCell.textContent = newStock;
+        stockCell.classList.remove('stock-low','stock-ok');
+        stockCell.classList.add(Number(newStock) <= Number(minStock || 0) ? 'stock-low' : 'stock-ok');
+      }
+    }
+
+    if (Number(newStock) <= 0) { btn.disabled = true; btn.textContent = 'Out of Stock'; }
+    else { btn.disabled = false; btn.textContent = 'Add to Cart'; }
+  }
+
+  function refreshStocks(){
+    const url = BASE + '/ItemStockController?_=' + Date.now();
+    fetch(url, { cache: 'no-store' })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        (data.books || []).forEach(b => updateDOMStock('book', String(b.id), Number(b.stock), Number(b.minStock)));
+        (data.accessories || []).forEach(a => updateDOMStock('accessory', String(a.id), Number(a.stock), Number(a.minStock)));
+      })
+      .catch(err => console.error('[stocks] refresh error:', err));
+  }
+
+  // Auto-refresh every 30s and once on load
+  document.addEventListener('DOMContentLoaded', function(){
+    refreshStocks();
+    updateCartTable();
+  });
+  setInterval(refreshStocks, 30000);
+
+  // Place order -> show invoice button, open PDF, refresh stocks
   const btnInvoice = document.getElementById('btnInvoice');
   document.getElementById('btnPlaceOrder').addEventListener('click', function(){
     var customerSel = document.getElementById('customerSelect');
@@ -324,6 +382,9 @@
 
         alert('Order placed successfully!\nInvoice Number: ' + res.invoiceNumber);
         cart = []; updateCartTable();
+
+        // refresh stocks immediately
+        refreshStocks();
       } else {
         alert('Error placing order: ' + (res.message || 'Unknown error'));
       }
@@ -338,63 +399,8 @@
   document.getElementById('btnClearCart').addEventListener('click', function() {
     if(cart.length > 0 && confirm('Clear all items from cart?')) { cart = []; updateCartTable(); }
   });
-
-  // Add Customer modal
-  var addCustomerBtn = document.getElementById('btnNewCustomer');
-  var addCustomerModal = document.getElementById('addCustomerModal');
-  var closeCustomerModal = document.getElementById('closeCustomerModal');
-
-  if (addCustomerBtn && addCustomerModal) {
-    addCustomerBtn.onclick = function() {
-      addCustomerModal.classList.add('show');
-      var f = document.getElementById('newCustomerForm'); f && f.reset();
-    };
-  }
-  if (closeCustomerModal && addCustomerModal) {
-    closeCustomerModal.onclick = function() { addCustomerModal.classList.remove('show'); };
-    addCustomerModal.onclick = function(e) { if (e.target === addCustomerModal) addCustomerModal.classList.remove('show'); };
-  }
-  var newCustomerForm = document.getElementById('newCustomerForm');
-  if (newCustomerForm) {
-    newCustomerForm.onsubmit = function(e) {
-      e.preventDefault();
-      var name = document.getElementById('newCustomerName').value.trim();
-      var address = document.getElementById('newCustomerAddress').value.trim();
-      var telephone = document.getElementById('newCustomerTelephone').value.trim();
-      var email = document.getElementById('newCustomerEmail').value.trim();
-      if (!name) { alert('Customer name is required!'); return; }
-
-      fetch(BASE + '/AddCustomerController', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: name, address: address, telephone: telephone, email: email })
-      })
-      .then(function(res){ return res.json(); })
-      .then(function(cust){
-        if (cust && cust.id) {
-          var sel = document.getElementById('customerSelect');
-          var opt = document.createElement('option');
-          opt.value = cust.id; opt.dataset.code = cust.customerCode;
-          opt.textContent = cust.username + ' [' + cust.customerCode + ']';
-          sel.appendChild(opt); sel.value = cust.id;
-          addCustomerModal.classList.remove('show'); newCustomerForm.reset();
-          alert('Customer added successfully!\nCustomer Code: ' + cust.customerCode);
-        } else {
-          alert('Failed to add customer: ' + (cust.error || 'Unknown error'));
-        }
-      })
-      .catch(function(err){
-        console.error('Add customer error:', err);
-        alert('Failed to add customer. Please try again.');
-      });
-    };
-  }
-
-  // Init
-  updateCartTable();
 </script>
 </body>
 </html>
-
 
 

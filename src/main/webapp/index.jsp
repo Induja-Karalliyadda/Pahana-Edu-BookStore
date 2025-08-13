@@ -81,7 +81,7 @@
   <div class="login-container">
     <div class="login-title">Pahana Edu Book Store</div>
 
-    <!-- show error if login failed -->
+    <!-- Display error message if login failed -->
     <c:if test="${param.error == '1'}">
       <div class="login-error">Invalid email/username or password.</div>
     </c:if>
@@ -98,8 +98,9 @@
       <button type="submit" class="login-btn">Login</button>
     </form>
 
-   <a href="view/signup.jsp" class="signup-link">Don't have an account? Sign up here</a>
+    <a href="view/signup.jsp" class="signup-link">Don't have an account? Sign up here</a>
   </div>
 
 </body>
 </html>
+

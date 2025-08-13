@@ -7,8 +7,6 @@ import javax.servlet.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.*;
 import java.util.List;
 
 @WebServlet("/staff")
@@ -18,9 +16,46 @@ public class StaffController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // Check if the user is logged in and has an admin role
+        HttpSession session = request.getSession(false);
+        String role = (session != null) ? (String) session.getAttribute("role") : null;
+
+        // If role is null (session doesn't exist), check the cookies for role
+        if (role == null) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("role".equals(cookie.getName())) {
+                        role = cookie.getValue();
+                        // If found in cookie, also set it in session for consistency
+                        if (session != null) {
+                            session.setAttribute("role", role);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        // If the role is not 'admin', redirect to Staff Dashboard
+        // This ensures staff members go to their dashboard, not admin pages
+        if (role == null || !role.equals("admin")) {
+            // If role is 'staff', redirect to Staff Dashboard
+            if ("staff".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/view/StaffDashboard.jsp");
+            } else {
+                // If no role or other role, redirect to login
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
+            }
+            return;
+        }
+
         try {
+            // Fetch all staff data and forward to Staff.jsp
             List<Staff> staffList = StaffService.getAll();
             request.setAttribute("staffList", staffList);
+
+            // Forward to Staff.jsp
             request.getRequestDispatcher("/view/Staff.jsp").forward(request, response);
 
         } catch (Exception e) {
@@ -34,9 +69,33 @@ public class StaffController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // Also check authorization for POST requests
+        HttpSession session = request.getSession(false);
+        String role = (session != null) ? (String) session.getAttribute("role") : null;
+
+        // Check cookies if session role is null
+        if (role == null) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("role".equals(cookie.getName())) {
+                        role = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Deny access if not admin
+        if (role == null || !role.equals("admin")) {
+            response.sendRedirect(request.getContextPath() + "/view/StaffDashboard.jsp");
+            return;
+        }
+
         String action = request.getParameter("action");
         try {
             if ("add".equals(action)) {
+                // Add new staff
                 Staff s = new Staff();
                 s.setUsername(request.getParameter("username"));
                 s.setAddress(request.getParameter("address"));
@@ -52,6 +111,7 @@ public class StaffController extends HttpServlet {
                 }
 
             } else if ("edit".equals(action)) {
+                // Edit existing staff
                 Staff s = new Staff();
                 s.setId(Integer.parseInt(request.getParameter("id")));
                 s.setUsername(request.getParameter("username"));
@@ -67,6 +127,7 @@ public class StaffController extends HttpServlet {
                 }
 
             } else if ("delete".equals(action)) {
+                // Delete staff
                 int id = Integer.parseInt(request.getParameter("id"));
                 if (!StaffService.delete(id)) {
                     request.setAttribute("errorMessage", "Failed to delete staff.");
@@ -76,12 +137,18 @@ public class StaffController extends HttpServlet {
                 }
             }
 
+            // Redirect back to staff management page after success
             response.sendRedirect(request.getContextPath() + "/staff");
 
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("errorMessage", "Server error: " + e.getMessage());
-            request.setAttribute("staffList", StaffService.getAll());
+            try {
+                request.setAttribute("staffList", StaffService.getAll());
+            } catch (Exception ex) {
+                // Handle nested exception
+                ex.printStackTrace();
+            }
             request.getRequestDispatcher("/view/Staff.jsp").forward(request, response);
         }
     }

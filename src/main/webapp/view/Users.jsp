@@ -27,19 +27,25 @@ if (request.getAttribute("userList") == null) {
   <img src="${pageContext.request.contextPath}/img/avatar.png" alt="Admin" class="avatar" />
 </header>
 
-<aside id="sidebar" class="sidebar">
-  <nav>
-    <h4 class="menu-title">Menu</h4>
-    <a href="${pageContext.request.contextPath}/view/AdminDashboard.jsp">Dashboard</a>
-    <a href="#">Orders</a>
-    <a href="#">Books</a>
-    <a href="${pageContext.request.contextPath}/users" class="active">Users</a>
-    <a href="${pageContext.request.contextPath}/staff">Staff</a>
-    <a href="#">Reports</a>
-    <a href="#">Settings</a>
-    <a href="${pageContext.request.contextPath}/LogoutServlet" class="logout">Logout</a>
-  </nav>
-</aside>
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="sidebar">
+    <nav>
+      <h4 class="menu-title">Menu</h4>
+      <c:url var="dashboardUrl" value="/AdminPOSController"/>
+      <c:url var="itemsBookUrl" value="/items"><c:param name="mainCategory" value="book"/></c:url>
+      <c:url var="usersUrl" value="/users"/>
+      <c:url var="staffUrl" value="/staff"/>
+            <c:url var="logoutUrl" value="/logout"/>
+      <a href="${dashboardUrl}">Dashboard</a>
+      <a href="#">Orders</a>
+      <a href="${itemsBookUrl}" class="active">Item</a>
+      <a href="${usersUrl}">Users</a>
+      <a href="${staffUrl}">Staff</a>
+      <a href="#">Reports</a>
+      <a href="#">Settings</a>
+      <a href="${logoutUrl}" class="logout">Logout</a>
+    </nav>
+  </aside>
 
 <div id="overlay" class="overlay"></div>
 

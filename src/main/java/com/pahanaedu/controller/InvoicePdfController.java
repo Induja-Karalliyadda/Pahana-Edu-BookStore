@@ -1,17 +1,24 @@
 package com.pahanaedu.controller;
 
 import com.pahanaedu.dao.OrderDAO;
+import com.pahanaedu.dao.UserDAO;
 import com.pahanaedu.model.Order;
 import com.pahanaedu.model.OrderDetail;
+import com.pahanaedu.model.User;
+import com.pahanaedu.util.EmailTemplate;
+import com.pahanaedu.util.Mailer;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
@@ -38,19 +45,12 @@ public class InvoicePdfController extends HttpServlet {
         }
 
         final int orderId;
-        try {
-            orderId = Integer.parseInt(idStr);
-        } catch (NumberFormatException e) {
-            response.sendError(400, "Invalid orderId");
-            return;
-        }
+        try { orderId = Integer.parseInt(idStr); }
+        catch (NumberFormatException e) { response.sendError(400, "Invalid orderId"); return; }
 
         OrderDAO dao = new OrderDAO();
         Order order = dao.getOrderWithDetails(orderId);
-        if (order == null) {
-            response.sendError(404, "Order not found");
-            return;
-        }
+        if (order == null) { response.sendError(404, "Order not found"); return; }
 
         // Use orderDate from DB if present, otherwise now()
         LocalDateTime dt = (order.getOrderDate() != null)
@@ -60,13 +60,13 @@ public class InvoicePdfController extends HttpServlet {
         String dateStr = dt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         String timeStr = dt.format(DateTimeFormatter.ofPattern("hh:mm a"));
 
-        response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "inline; filename=" + order.getInvoiceNumber() + ".pdf");
-
         NumberFormat nf = NumberFormat.getNumberInstance(Locale.US);
         nf.setMinimumFractionDigits(2);
         nf.setMaximumFractionDigits(2);
 
+        // === Build PDF into memory (byte[])
+        byte[] pdfBytes;
+        String fileName = order.getInvoiceNumber() + ".pdf";
         try (PDDocument doc = new PDDocument()) {
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
@@ -82,8 +82,11 @@ public class InvoicePdfController extends HttpServlet {
             y = draw(cs, mono,  FONT_SIZE, MARGIN_LEFT, y, "                No. 02, Main Street, Colombo City");
             y = draw(cs, mono,  FONT_SIZE, MARGIN_LEFT, y, "               Tel: 011-2030400 | Email: info@pahanaedu.lk");
             y = draw(cs, mono,  FONT_SIZE, MARGIN_LEFT, y, "------------------------------------------------------------");
-            y = draw(cs, mono,  FONT_SIZE, MARGIN_LEFT, y, String.format("Date: %-16s          Time: %-10s", dateStr, timeStr));
-            y = draw(cs, mono,  FONT_SIZE, MARGIN_LEFT, y, String.format("Customer: %-14s   Invoice No: %s", safe(order.getCustomerCode(),14), order.getInvoiceNumber()));
+            y = draw(cs, mono,  FONT_SIZE, MARGIN_LEFT, y,
+                    String.format("Date: %-16s          Time: %-10s", dateStr, timeStr));
+            y = draw(cs, mono,  FONT_SIZE, MARGIN_LEFT, y,
+                    String.format("Customer: %-14s   Invoice No: %s",
+                            safe(order.getCustomerCode(),14), order.getInvoiceNumber()));
             y = draw(cs, mono,  FONT_SIZE, MARGIN_LEFT, y, "------------------------------------------------------------");
             y = draw(cs, monoB, FONT_SIZE, MARGIN_LEFT, y, fixCols("Item", "Qty", "Unit Price", "Total"));
             y = draw(cs, mono,  FONT_SIZE, MARGIN_LEFT, y, "------------------------------------------------------------");
@@ -117,8 +120,80 @@ public class InvoicePdfController extends HttpServlet {
             y = draw(cs, mono,  FONT_SIZE, MARGIN_LEFT, y, "------------------------------------------------------------");
 
             cs.close();
-            doc.save(response.getOutputStream());
+
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                doc.save(baos);
+                pdfBytes = baos.toByteArray();
+            }
         }
+
+        // === Look up customer's email (by id if available, else by customerCode)
+        String customerEmail = null;
+        String customerName  = "Customer";
+        try {
+            UserDAO userDao = new UserDAO();
+            User u = null;
+
+            // Try by customerId if Order has it (reflection keeps this compiling either way)
+            try {
+                java.lang.reflect.Method m = order.getClass().getMethod("getCustomerId");
+                Object idObj = m.invoke(order);
+                if (idObj instanceof Integer) {
+                    Integer customerId = (Integer) idObj;
+                    if (customerId != null) {
+                        u = userDao.findById(customerId);
+                    }
+                }
+            } catch (NoSuchMethodException ignored) {
+                // fall back to code
+            }
+
+            // Fallback: by customerCode (Order definitely has it, you just printed it)
+            if (u == null && order.getCustomerCode() != null && !order.getCustomerCode().isBlank()) {
+                u = userDao.findByCustomerCode(order.getCustomerCode());
+            }
+
+            if (u != null) {
+                if (u.getEmail() != null && !u.getEmail().isBlank()) customerEmail = u.getEmail();
+                if (u.getUsername() != null && !u.getUsername().isBlank()) customerName = u.getUsername();
+            } else {
+                // last resort: if Order exposes a name, use that (reflection again)
+                try {
+                    java.lang.reflect.Method m2 = order.getClass().getMethod("getCustomerName");
+                    Object nameObj = m2.invoke(order);
+                    if (nameObj instanceof String && !((String) nameObj).isBlank()) {
+                        customerName = (String) nameObj;
+                    }
+                } catch (NoSuchMethodException ignored2) { /* ok */ }
+            }
+        } catch (Exception ignored) { }
+
+        // === Email invoice (async) if we have an email
+        if (customerEmail != null && !customerEmail.isBlank()) {
+            String html = EmailTemplate.invoice(
+                    customerName,
+                    order.getInvoiceNumber(),
+                    nf.format(order.getTotalAmount()),
+                    dateStr
+            );
+            Mailer.sendHtmlWithPdfAsync(
+                    customerEmail,
+                    "Your Invoice " + order.getInvoiceNumber(),
+                    html,
+                    fileName,
+                    pdfBytes
+            );
+        } else {
+            System.out.println("[InvoicePdfController] No customer email found for orderId="
+                    + orderId + " (code=" + order.getCustomerCode() + ")");
+        }
+
+        // === Stream PDF to browser (unchanged behavior)
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "inline; filename=" + fileName);
+        response.setContentLength(pdfBytes.length);
+        response.getOutputStream().write(pdfBytes);
+        response.getOutputStream().flush();
     }
 
     private float draw(PDPageContentStream cs, PDFont font, float size, float x, float y, String text) throws IOException {
@@ -155,5 +230,3 @@ public class InvoicePdfController extends HttpServlet {
         return s.length() > max ? s.substring(0, max) : s;
     }
 }
-
-

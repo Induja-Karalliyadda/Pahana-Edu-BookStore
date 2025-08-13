@@ -264,5 +264,49 @@ public class UserDAO {
             return null;
         }
     }
+ // Find a user by customer_code (used as fallback if Order doesn't expose customerId)
+    public User findByCustomerCode(String customerCode) throws Exception {
+        String sql = "SELECT id, username, email, address, telephone, customer_code, role FROM users WHERE customer_code = ?";
+        try (java.sql.Connection con = getConnection();
+             java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, customerCode);
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User u = new User();
+                    u.setId(rs.getInt("id"));
+                    u.setUsername(rs.getString("username"));
+                    u.setEmail(rs.getString("email"));
+                    u.setAddress(rs.getString("address"));
+                    u.setTelephone(rs.getString("telephone"));
+                    u.setCustomerCode(rs.getString("customer_code"));
+                    u.setRole(rs.getString("role"));
+                    return u;
+                }
+            }
+        }
+        return null;
+    }
+    public User findById(int id) throws Exception {
+        String sql = "SELECT id, username, email, address, telephone, customer_code, role FROM users WHERE id = ?";
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User u = new User();
+                    u.setId(rs.getInt("id"));
+                    u.setUsername(rs.getString("username"));
+                    u.setEmail(rs.getString("email"));
+                    u.setAddress(rs.getString("address"));
+                    u.setTelephone(rs.getString("telephone"));
+                    u.setCustomerCode(rs.getString("customer_code"));
+                    u.setRole(rs.getString("role"));
+                    return u;
+                }
+            }
+        }
+        return null;
+    }
+
 }
 
