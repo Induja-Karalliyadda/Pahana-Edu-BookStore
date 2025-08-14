@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <%
     // Check if user is logged in and get their role from session
@@ -179,6 +180,36 @@
       font-size: 12px;
       margin-right: 10px;
     }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+    
+    .checkbox-group label {
+      margin: 0;
+      font-weight: normal;
+      cursor: pointer;
+    }
+    
+    .password-section {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      margin-bottom: 15px;
+    }
+    
+    .password-section.hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -272,14 +303,12 @@
                   <td>${s.email}</td>
                   <td>${s.telephone}</td>
                   <td>
-                    <button class="btn small primary" type="button"
-                            onclick="openEditModal(
-                              '${s.id}',
-                              '${s.username}',
-                              '${s.address}',
-                              '${s.email}',
-                              '${s.telephone}'
-                            )">
+                    <button class="btn small primary edit-btn" type="button"
+                            data-id="${s.id}"
+                            data-username="${fn:escapeXml(s.username)}"
+                            data-address="${fn:escapeXml(s.address)}"
+                            data-email="${fn:escapeXml(s.email)}"
+                            data-telephone="${fn:escapeXml(s.telephone)}">
                       Edit
                     </button>
                     <form action="${pageContext.request.contextPath}/staff"
@@ -347,7 +376,8 @@
                  required />
         </div>
         
-        <div class="form-group" id="pwRow">
+        <!-- Password section for adding new staff -->
+        <div class="form-group" id="pwRowAdd">
           <label for="f-password">Password <span class="required">*</span></label>
           <input type="password" 
                  name="password" 
@@ -356,6 +386,35 @@
                  placeholder="Minimum 6 characters"
                  title="Password must be at least 6 characters long"
                  required />
+        </div>
+
+        <!-- Change password section for editing (only visible during edit) -->
+        <div id="changePasswordSection" class="hidden">
+          <div class="checkbox-group">
+            <input type="checkbox" id="changePasswordCheckbox" />
+            <label for="changePasswordCheckbox">Change Password</label>
+          </div>
+          
+          <div id="passwordFields" class="password-section hidden">
+            <div class="form-group">
+              <label for="f-new-password">New Password <span class="required">*</span></label>
+              <input type="password" 
+                     name="password" 
+                     id="f-new-password" 
+                     minlength="6"
+                     placeholder="Enter new password (minimum 6 characters)"
+                     title="Password must be at least 6 characters long" />
+            </div>
+            
+            <div class="form-group">
+              <label for="f-confirm-password">Confirm New Password <span class="required">*</span></label>
+              <input type="password" 
+                     id="f-confirm-password" 
+                     minlength="6"
+                     placeholder="Confirm new password"
+                     title="Please confirm the new password" />
+            </div>
+          </div>
         </div>
 
         <div class="form-actions">
@@ -368,129 +427,244 @@
 
   <!-- JavaScript for Modal Functionality -->
   <script>
-    // Wait for DOM to load
-    document.addEventListener('DOMContentLoaded', function() {
+    // Staff Modal Management
+    let StaffModal = {
+      elements: {},
       
-      // Get modal elements
-      const modal = document.getElementById('modal');
-      const btnAddStaff = document.getElementById('btnAddStaff');
-      const cancelBtn = document.getElementById('cancelBtn');
-      const modalTitle = document.getElementById('modalTitle');
-      const staffForm = document.getElementById('staffForm');
-      const actionField = document.getElementById('f-action');
-      const idField = document.getElementById('f-id');
-      const pwRow = document.getElementById('pwRow');
+      init: function() {
+        console.log('Initializing StaffModal...');
+        
+        // Get modal elements after DOM is loaded
+        this.elements = {
+          modal: document.getElementById('modal'),
+          btnAddStaff: document.getElementById('btnAddStaff'),
+          cancelBtn: document.getElementById('cancelBtn'),
+          modalTitle: document.getElementById('modalTitle'),
+          staffForm: document.getElementById('staffForm'),
+          actionField: document.getElementById('f-action'),
+          idField: document.getElementById('f-id'),
+          pwRowAdd: document.getElementById('pwRowAdd'),
+          changePasswordSection: document.getElementById('changePasswordSection'),
+          changePasswordCheckbox: document.getElementById('changePasswordCheckbox'),
+          passwordFields: document.getElementById('passwordFields')
+        };
 
-      // Debug log
-      console.log('Modal elements loaded:', {
-        modal: modal,
-        btnAddStaff: btnAddStaff,
-        cancelBtn: cancelBtn
-      });
+        // Debug log
+        console.log('Modal elements loaded:', this.elements);
 
-      // Open modal for adding new staff
-      if (btnAddStaff) {
-        btnAddStaff.addEventListener('click', function(e) {
-          e.preventDefault();
-          console.log('Add Staff button clicked');
-          
-          modalTitle.textContent = 'Add New Staff Member';
-          actionField.value = 'add';
-          idField.value = '';
-          staffForm.reset();
-          
-          // Show password field for new staff
-          pwRow.style.display = 'block';
-          document.getElementById('f-password').setAttribute('required', 'required');
-          
-          // Show modal
-          modal.style.display = 'flex';
-        });
-      }
-
-      // Close modal via Cancel button
-      if (cancelBtn) {
-        cancelBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          console.log('Cancel button clicked');
-          modal.style.display = 'none';
-          staffForm.reset();
-        });
-      }
-
-      // Close modal when clicking outside
-      window.addEventListener('click', function(e) {
-        if (e.target === modal) {
-          console.log('Clicked outside modal');
-          modal.style.display = 'none';
-          staffForm.reset();
+        // Check if all required elements exist
+        const missing = [];
+        for (const [key, element] of Object.entries(this.elements)) {
+          if (!element) {
+            missing.push(key);
+          }
         }
-      });
-
-      // Handle ESC key to close modal
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && modal.style.display === 'flex') {
-          modal.style.display = 'none';
-          staffForm.reset();
-        }
-      });
-    });
-
-    // Open modal for editing staff (Global function)
-    function openEditModal(id, username, address, email, telephone) {
-      console.log('Edit modal opened for ID:', id);
-      
-      const modal = document.getElementById('modal');
-      const modalTitle = document.getElementById('modalTitle');
-      const actionField = document.getElementById('f-action');
-      const idField = document.getElementById('f-id');
-      const pwRow = document.getElementById('pwRow');
-      
-      modalTitle.textContent = 'Edit Staff Member';
-      actionField.value = 'edit';
-      idField.value = id;
-      
-      // Fill form fields with existing data
-      document.getElementById('f-username').value = username;
-      document.getElementById('f-address').value = address;
-      document.getElementById('f-email').value = email;
-      document.getElementById('f-telephone').value = telephone;
-      
-      // Hide password field for edit (password not changed during edit)
-      pwRow.style.display = 'none';
-      document.getElementById('f-password').removeAttribute('required');
-      document.getElementById('f-password').value = '';
-      
-      // Show modal
-      modal.style.display = 'flex';
-    }
-
-    // Form validation before submit
-    document.getElementById('staffForm').addEventListener('submit', function(e) {
-      const action = document.getElementById('f-action').value;
-      console.log('Form submitted with action:', action);
-      
-      // Additional validation if needed
-      const telephone = document.getElementById('f-telephone').value;
-      if (telephone && !/^[0-9]{10}$/.test(telephone)) {
-        e.preventDefault();
-        alert('Please enter a valid 10-digit phone number');
-        return false;
-      }
-      
-      // If adding new staff, ensure password is provided
-      if (action === 'add') {
-        const password = document.getElementById('f-password').value;
-        if (!password || password.length < 6) {
-          e.preventDefault();
-          alert('Password must be at least 6 characters long');
+        
+        if (missing.length > 0) {
+          console.error('Missing elements:', missing);
           return false;
         }
-      }
+
+        this.bindEvents();
+        console.log('StaffModal initialized successfully');
+        return true;
+      },
       
-      console.log('Form validation passed, submitting...');
-      return true;
+      bindEvents: function() {
+        const self = this;
+        
+        // Handle change password checkbox
+        this.elements.changePasswordCheckbox.addEventListener('change', function() {
+          if (this.checked) {
+            self.elements.passwordFields.classList.remove('hidden');
+            document.getElementById('f-new-password').setAttribute('required', 'required');
+            document.getElementById('f-confirm-password').setAttribute('required', 'required');
+          } else {
+            self.elements.passwordFields.classList.add('hidden');
+            document.getElementById('f-new-password').removeAttribute('required');
+            document.getElementById('f-confirm-password').removeAttribute('required');
+            document.getElementById('f-new-password').value = '';
+            document.getElementById('f-confirm-password').value = '';
+          }
+        });
+
+        // Open modal for adding new staff
+        this.elements.btnAddStaff.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Add Staff button clicked');
+          self.openAddModal();
+        });
+
+        // Close modal via Cancel button
+        this.elements.cancelBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Cancel button clicked');
+          self.closeModal();
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+          if (e.target === self.elements.modal) {
+            console.log('Clicked outside modal');
+            self.closeModal();
+          }
+        });
+
+        // Handle ESC key to close modal
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && self.elements.modal.style.display === 'flex') {
+            self.closeModal();
+          }
+        });
+        
+        // Form validation
+        this.elements.staffForm.addEventListener('submit', function(e) {
+          return self.validateForm(e);
+        });
+
+        // Bind edit buttons using event delegation
+        document.addEventListener('click', function(e) {
+          if (e.target.classList.contains('edit-btn')) {
+            e.preventDefault();
+            const button = e.target;
+            const id = button.getAttribute('data-id');
+            const username = button.getAttribute('data-username');
+            const address = button.getAttribute('data-address');
+            const email = button.getAttribute('data-email');
+            const telephone = button.getAttribute('data-telephone');
+            
+            console.log('Edit button clicked for staff ID:', id);
+            self.openEditModal(id, username, address, email, telephone);
+          }
+        });
+      },
+      
+      openAddModal: function() {
+        console.log('Opening add modal');
+        this.elements.modalTitle.textContent = 'Add New Staff Member';
+        this.elements.actionField.value = 'add';
+        this.elements.idField.value = '';
+        this.elements.staffForm.reset();
+        
+        // Show password field for new staff, hide change password section
+        this.elements.pwRowAdd.style.display = 'block';
+        this.elements.changePasswordSection.classList.add('hidden');
+        document.getElementById('f-password').setAttribute('required', 'required');
+        
+        // Reset change password section
+        this.elements.changePasswordCheckbox.checked = false;
+        this.elements.passwordFields.classList.add('hidden');
+        
+        // Show modal
+        this.elements.modal.style.display = 'flex';
+      },
+      
+      openEditModal: function(id, username, address, email, telephone) {
+        console.log('Edit modal opened for ID:', id);
+        console.log('Data:', { id, username, address, email, telephone });
+        
+        this.elements.modalTitle.textContent = 'Edit Staff Member';
+        this.elements.actionField.value = 'edit';
+        this.elements.idField.value = id;
+        
+        // Fill form fields with existing data
+        document.getElementById('f-username').value = username || '';
+        document.getElementById('f-address').value = address || '';
+        document.getElementById('f-email').value = email || '';
+        document.getElementById('f-telephone').value = telephone || '';
+        
+        // Hide add password field, show change password section
+        this.elements.pwRowAdd.style.display = 'none';
+        this.elements.changePasswordSection.classList.remove('hidden');
+        document.getElementById('f-password').removeAttribute('required');
+        document.getElementById('f-password').value = '';
+        
+        // Reset change password section
+        this.elements.changePasswordCheckbox.checked = false;
+        this.elements.passwordFields.classList.add('hidden');
+        document.getElementById('f-new-password').removeAttribute('required');
+        document.getElementById('f-confirm-password').removeAttribute('required');
+        document.getElementById('f-new-password').value = '';
+        document.getElementById('f-confirm-password').value = '';
+        
+        // Show modal
+        this.elements.modal.style.display = 'flex';
+        console.log('Edit modal should now be visible');
+      },
+      
+      closeModal: function() {
+        console.log('Closing modal');
+        this.elements.modal.style.display = 'none';
+        this.elements.staffForm.reset();
+        // Reset change password section
+        this.elements.changePasswordCheckbox.checked = false;
+        this.elements.passwordFields.classList.add('hidden');
+      },
+      
+      validateForm: function(e) {
+        const action = this.elements.actionField.value;
+        console.log('Form submitted with action:', action);
+        
+        // Additional validation if needed
+        const telephone = document.getElementById('f-telephone').value;
+        if (telephone && !/^[0-9]{10}$/.test(telephone)) {
+          e.preventDefault();
+          alert('Please enter a valid 10-digit phone number');
+          return false;
+        }
+        
+        // If adding new staff, ensure password is provided
+        if (action === 'add') {
+          const password = document.getElementById('f-password').value;
+          if (!password || password.length < 6) {
+            e.preventDefault();
+            alert('Password must be at least 6 characters long');
+            return false;
+          }
+        }
+        
+        // If editing and change password is checked, validate passwords
+        if (action === 'edit') {
+          if (this.elements.changePasswordCheckbox.checked) {
+            const newPassword = document.getElementById('f-new-password').value;
+            const confirmPassword = document.getElementById('f-confirm-password').value;
+            
+            if (!newPassword || newPassword.length < 6) {
+              e.preventDefault();
+              alert('New password must be at least 6 characters long');
+              return false;
+            }
+            
+            if (newPassword !== confirmPassword) {
+              e.preventDefault();
+              alert('New password and confirm password do not match');
+              return false;
+            }
+          }
+        }
+        
+        console.log('Form validation passed, submitting...');
+        return true;
+      }
+    };
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded, initializing StaffModal...');
+      const initialized = StaffModal.init();
+      if (!initialized) {
+        console.error('Failed to initialize StaffModal');
+      }
     });
+
+    // Debug function to check modal state
+    function debugModal() {
+      console.log('Modal elements:', StaffModal.elements);
+      console.log('Modal display:', StaffModal.elements.modal ? StaffModal.elements.modal.style.display : 'Modal not found');
+    }
+
+    // Make debugModal available globally for debugging
+    window.debugModal = debugModal;
   </script>
   
   <!-- External admin.js if available -->

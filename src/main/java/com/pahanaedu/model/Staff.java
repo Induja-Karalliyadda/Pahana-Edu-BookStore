@@ -9,7 +9,7 @@ public class Staff {
     private String password;
     private String customerCode;
 
-    // getters/setters
+    // Getters and Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getUsername() { return username; }
@@ -25,3 +25,4 @@ public class Staff {
     public String getCustomerCode() { return customerCode; }
     public void setCustomerCode(String customerCode) { this.customerCode = customerCode; }
 }
+
