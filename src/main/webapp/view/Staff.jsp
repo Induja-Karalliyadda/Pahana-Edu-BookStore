@@ -51,165 +51,29 @@
   
   <!-- Additional CSS for Modal if not in admin.css -->
   <style>
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0, 0, 0, 0.5);
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .modal-content {
-      background-color: #fefefe;
-      margin: 5% auto;
-      padding: 30px;
-      border: 1px solid #888;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .modal-content h2 {
-      margin-top: 0;
-      color: #333;
-      border-bottom: 2px solid #007bff;
-      padding-bottom: 10px;
-    }
-    
-    .form-group {
-      margin-bottom: 20px;
-    }
-    
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-      color: #555;
-    }
-    
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-    
-    .form-group input:focus {
-      outline: none;
-      border-color: #007bff;
-      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
-    }
-    
-    .form-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      margin-top: 25px;
-      padding-top: 20px;
-      border-top: 1px solid #eee;
-    }
-    
-    .required {
-      color: #e74c3c;
-    }
-    
-    .success-box {
-      background-color: #d4edda;
-      border: 1px solid #c3e6cb;
-      color: #155724;
-      padding: 12px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-    }
-    
-    .error-box {
-      background-color: #f8d7da;
-      border: 1px solid #f5c6cb;
-      color: #721c24;
-      padding: 12px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-    }
-    
-    .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background-color 0.3s;
-    }
-    
-    .btn.primary {
-      background-color: #007bff;
-      color: white;
-    }
-    
-    .btn.primary:hover {
-      background-color: #0056b3;
-    }
-    
-    .btn.danger {
-      background-color: #dc3545;
-      color: white;
-    }
-    
-    .btn.danger:hover {
-      background-color: #c82333;
-    }
-    
-    .btn.small {
-      padding: 5px 10px;
-      font-size: 12px;
-    }
-    
-    .badge {
-      background-color: #007bff;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 12px;
-      margin-right: 10px;
-    }
-    
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 15px;
-    }
-    
-    .checkbox-group input[type="checkbox"] {
-      width: auto;
-      margin: 0;
-    }
-    
-    .checkbox-group label {
-      margin: 0;
-      font-weight: normal;
-      cursor: pointer;
-    }
-    
-    .password-section {
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 15px;
-      background-color: #f8f9fa;
-      margin-bottom: 15px;
-    }
-    
-    .password-section.hidden {
-      display: none;
-    }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; }
+    .modal-content { background-color: #fefefe; margin: 5% auto; padding: 30px; border: 1px solid #888; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    .modal-content h2 { margin-top: 0; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+    .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+    .form-group input:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1); }
+    .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee; }
+    .required { color: #e74c3c; }
+    .success-box { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 4px; margin-bottom: 20px; }
+    .error-box { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px; }
+    .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background-color 0.3s; }
+    .btn.primary { background-color: #007bff; color: white; }
+    .btn.primary:hover { background-color: #0056b3; }
+    .btn.danger { background-color: #dc3545; color: white; }
+    .btn.danger:hover { background-color: #c82333; }
+    .btn.small { padding: 5px 10px; font-size: 12px; }
+    .badge { background-color: #007bff; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; margin-right: 10px; }
+    .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; }
+    .checkbox-group input[type="checkbox"] { width: auto; margin: 0; }
+    .checkbox-group label { margin: 0; font-weight: normal; cursor: pointer; }
+    .password-section { border: 1px solid #ddd; border-radius: 4px; padding: 15px; background-color: #f8f9fa; margin-bottom: 15px; }
+    .password-section.hidden { display: none; }
   </style>
 </head>
 <body>
@@ -398,21 +262,25 @@
           <div id="passwordFields" class="password-section hidden">
             <div class="form-group">
               <label for="f-new-password">New Password <span class="required">*</span></label>
+              <!-- Keep name="password" here; we'll DISABLE the add field in edit mode so only this submits when enabled -->
               <input type="password" 
                      name="password" 
                      id="f-new-password" 
                      minlength="6"
                      placeholder="Enter new password (minimum 6 characters)"
-                     title="Password must be at least 6 characters long" />
+                     title="Password must be at least 6 characters long"
+                     disabled />
             </div>
             
             <div class="form-group">
               <label for="f-confirm-password">Confirm New Password <span class="required">*</span></label>
               <input type="password" 
+                     name="confirmPassword"
                      id="f-confirm-password" 
                      minlength="6"
                      placeholder="Confirm new password"
-                     title="Please confirm the new password" />
+                     title="Please confirm the new password"
+                     disabled />
             </div>
           </div>
         </div>
@@ -475,16 +343,23 @@
         
         // Handle change password checkbox
         this.elements.changePasswordCheckbox.addEventListener('change', function() {
+          const newPw = document.getElementById('f-new-password');
+          const confirmPw = document.getElementById('f-confirm-password');
+
           if (this.checked) {
             self.elements.passwordFields.classList.remove('hidden');
-            document.getElementById('f-new-password').setAttribute('required', 'required');
-            document.getElementById('f-confirm-password').setAttribute('required', 'required');
+            newPw.removeAttribute('disabled');
+            confirmPw.removeAttribute('disabled');
+            newPw.setAttribute('required', 'required');
+            confirmPw.setAttribute('required', 'required');
           } else {
             self.elements.passwordFields.classList.add('hidden');
-            document.getElementById('f-new-password').removeAttribute('required');
-            document.getElementById('f-confirm-password').removeAttribute('required');
-            document.getElementById('f-new-password').value = '';
-            document.getElementById('f-confirm-password').value = '';
+            newPw.value = '';
+            confirmPw.value = '';
+            newPw.removeAttribute('required');
+            confirmPw.removeAttribute('required');
+            newPw.setAttribute('disabled', 'disabled');
+            confirmPw.setAttribute('disabled', 'disabled');
           }
         });
 
@@ -549,8 +424,22 @@
         // Show password field for new staff, hide change password section
         this.elements.pwRowAdd.style.display = 'block';
         this.elements.changePasswordSection.classList.add('hidden');
-        document.getElementById('f-password').setAttribute('required', 'required');
-        
+
+        // Ensure correct enabled/required states for ADD mode
+        const addPw = document.getElementById('f-password');
+        const newPw = document.getElementById('f-new-password');
+        const confirmPw = document.getElementById('f-confirm-password');
+
+        addPw.removeAttribute('disabled');
+        addPw.setAttribute('required', 'required');
+
+        newPw.value = '';
+        confirmPw.value = '';
+        newPw.setAttribute('disabled', 'disabled');
+        confirmPw.setAttribute('disabled', 'disabled');
+        newPw.removeAttribute('required');
+        confirmPw.removeAttribute('required');
+
         // Reset change password section
         this.elements.changePasswordCheckbox.checked = false;
         this.elements.passwordFields.classList.add('hidden');
@@ -576,16 +465,27 @@
         // Hide add password field, show change password section
         this.elements.pwRowAdd.style.display = 'none';
         this.elements.changePasswordSection.classList.remove('hidden');
-        document.getElementById('f-password').removeAttribute('required');
-        document.getElementById('f-password').value = '';
-        
+
+        // Ensure correct enabled/required states for EDIT mode
+        const addPw = document.getElementById('f-password');
+        const newPw = document.getElementById('f-new-password');
+        const confirmPw = document.getElementById('f-confirm-password');
+
+        addPw.value = '';
+        addPw.removeAttribute('required');
+        addPw.setAttribute('disabled', 'disabled'); // CRUCIAL: prevent hidden add password from submitting
+
+        // New/confirm are disabled until checkbox is ticked
+        newPw.value = '';
+        confirmPw.value = '';
+        newPw.setAttribute('disabled', 'disabled');
+        confirmPw.setAttribute('disabled', 'disabled');
+        newPw.removeAttribute('required');
+        confirmPw.removeAttribute('required');
+
         // Reset change password section
         this.elements.changePasswordCheckbox.checked = false;
         this.elements.passwordFields.classList.add('hidden');
-        document.getElementById('f-new-password').removeAttribute('required');
-        document.getElementById('f-confirm-password').removeAttribute('required');
-        document.getElementById('f-new-password').value = '';
-        document.getElementById('f-confirm-password').value = '';
         
         // Show modal
         this.elements.modal.style.display = 'flex';
@@ -596,9 +496,21 @@
         console.log('Closing modal');
         this.elements.modal.style.display = 'none';
         this.elements.staffForm.reset();
-        // Reset change password section
+        // Reset change password section and states
+        const addPw = document.getElementById('f-password');
+        const newPw = document.getElementById('f-new-password');
+        const confirmPw = document.getElementById('f-confirm-password');
+
         this.elements.changePasswordCheckbox.checked = false;
         this.elements.passwordFields.classList.add('hidden');
+
+        // Default to ADD state after closing
+        addPw.removeAttribute('disabled');
+        addPw.setAttribute('required', 'required');
+        newPw.setAttribute('disabled', 'disabled');
+        confirmPw.setAttribute('disabled', 'disabled');
+        newPw.removeAttribute('required');
+        confirmPw.removeAttribute('required');
       },
       
       validateForm: function(e) {

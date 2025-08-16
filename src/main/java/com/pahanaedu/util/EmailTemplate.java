@@ -52,4 +52,3 @@ public class EmailTemplate {
         return s.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;");
     }
 }
-

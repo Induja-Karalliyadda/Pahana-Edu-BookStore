@@ -119,12 +119,6 @@ public class StaffController extends HttpServlet {
                 s.setEmail(request.getParameter("email"));
                 s.setTelephone(request.getParameter("telephone"));
 
-                // Check if password change is requested
-                String newPassword = request.getParameter("password");
-                if (newPassword != null && !newPassword.isEmpty()) {
-                    s.setPassword(newPassword);  // Update password
-                }
-
                 if (!StaffService.update(s)) {
                     request.setAttribute("errorMessage", "Failed to update staff.");
                     request.setAttribute("staffList", StaffService.getAll());
@@ -159,4 +153,3 @@ public class StaffController extends HttpServlet {
         }
     }
 }
-

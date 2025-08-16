@@ -399,8 +399,61 @@
   document.getElementById('btnClearCart').addEventListener('click', function() {
     if(cart.length > 0 && confirm('Clear all items from cart?')) { cart = []; updateCartTable(); }
   });
+  //
+  // Modal open/close
+const addCustomerBtn = document.getElementById('btnNewCustomer');
+const addCustomerModal = document.getElementById('addCustomerModal');
+const closeCustomerModal = document.getElementById('closeCustomerModal');
+
+addCustomerBtn.addEventListener('click', () => {
+    addCustomerModal.classList.add('show');
+});
+
+closeCustomerModal.addEventListener('click', () => {
+    addCustomerModal.classList.remove('show');
+});
+
+// Add new customer via AJAX
+document.getElementById('newCustomerForm').addEventListener('submit', function(e){
+    e.preventDefault();
+
+    const data = {
+        username: document.getElementById('newCustomerName').value.trim(),
+        address: document.getElementById('newCustomerAddress').value.trim(),
+        telephone: document.getElementById('newCustomerTelephone').value.trim(),
+        email: document.getElementById('newCustomerEmail').value.trim()
+    };
+
+    fetch(BASE + '/AddCustomerController', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(res => {
+        if(res.error){
+            alert('Error: ' + res.error);
+        } else {
+            alert('Customer added: ' + res.username);
+
+            // add new customer to select dropdown
+            const sel = document.getElementById('customerSelect');
+            const opt = document.createElement('option');
+            opt.value = res.id;
+            opt.dataset.code = res.customerCode;
+            opt.textContent = res.username + ' [' + res.customerCode + ']';
+            sel.appendChild(opt);
+            sel.value = res.id; // select the new customer
+
+            addCustomerModal.classList.remove('show');
+            this.reset();
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Server error while adding customer');
+    });
+});
 </script>
 </body>
 </html>
-
-

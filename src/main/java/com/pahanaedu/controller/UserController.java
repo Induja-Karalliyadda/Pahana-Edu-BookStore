@@ -15,20 +15,21 @@ public class UserController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         try {
             String keyword = request.getParameter("kw");
             List<User> userList;
 
-            // Debug logging
+            // Debugging information
             System.out.println("=== UserServlet doGet called ===");
             System.out.println("Request URI: " + request.getRequestURI());
             System.out.println("Search keyword: '" + keyword + "'");
 
             if (keyword != null && !keyword.trim().isEmpty()) {
+                // Search for users if the keyword is provided
                 userList = UserService.searchUsers(keyword.trim());
                 System.out.println("Search performed with keyword: '" + keyword + "'");
             } else {
+                // Load all users if no keyword is provided
                 userList = UserService.getAllUsers();
                 System.out.println("Loading all users (no search keyword)");
             }
@@ -45,8 +46,9 @@ public class UserController extends HttpServlet {
             }
 
             request.setAttribute("userList", userList);
+            // Forward to the users page
             request.getRequestDispatcher("/view/Users.jsp").forward(request, response);
-            
+
         } catch (Exception e) {
             System.err.println("Exception in UserServlet doGet: " + e.getMessage());
             e.printStackTrace();
@@ -57,7 +59,6 @@ public class UserController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         try {
             String action = request.getParameter("action");
             System.out.println("=== UserServlet doPost called ===");
@@ -85,8 +86,9 @@ public class UserController extends HttpServlet {
                 System.out.println("Update user " + id + ": " + (success ? "SUCCESS" : "FAILED"));
             }
 
+            // Redirect to the users page after action
             response.sendRedirect(request.getContextPath() + "/users");
-            
+
         } catch (Exception e) {
             System.err.println("Exception in UserServlet doPost: " + e.getMessage());
             e.printStackTrace();
@@ -94,3 +96,4 @@ public class UserController extends HttpServlet {
         }
     }
 }
+

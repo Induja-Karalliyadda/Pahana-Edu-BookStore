@@ -20,9 +20,7 @@ public class AddCustomerController extends HttpServlet {
     private final Gson gson = new Gson();
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
-
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
 
@@ -56,9 +54,8 @@ public class AddCustomerController extends HttpServlet {
                     String html = EmailTemplate.welcome(
                             created.getUsername(),
                             created.getCustomerCode(),
-                            created.getTempPassword() // same as customer code in your setup
+                            created.getTempPassword()
                     );
-                    // send non-blocking; see Tomcat logs for JavaMail DEBUG output
                     Mailer.sendHtmlAsync(email, "Welcome to Pahana Edu Bookshop", html);
                     emailQueued = true;
                 }
@@ -82,5 +79,3 @@ public class AddCustomerController extends HttpServlet {
         }
     }
 }
-
-
