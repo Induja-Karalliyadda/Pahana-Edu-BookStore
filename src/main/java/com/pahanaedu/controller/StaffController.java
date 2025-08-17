@@ -37,14 +37,11 @@ public class StaffController extends HttpServlet {
             }
         }
 
-        // If the role is not 'admin', redirect to Staff Dashboard
-        // This ensures staff members go to their dashboard, not admin pages
+        // If the role is not 'admin', redirect accordingly
         if (role == null || !role.equals("admin")) {
-            // If role is 'staff', redirect to Staff Dashboard
             if ("staff".equals(role)) {
                 response.sendRedirect(request.getContextPath() + "/view/StaffDashboard.jsp");
             } else {
-                // If no role or other role, redirect to login
                 response.sendRedirect(request.getContextPath() + "/login.jsp");
             }
             return;
@@ -69,7 +66,7 @@ public class StaffController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Also check authorization for POST requests
+        // Authorization check for POST requests
         HttpSession session = request.getSession(false);
         String role = (session != null) ? (String) session.getAttribute("role") : null;
 
@@ -93,6 +90,7 @@ public class StaffController extends HttpServlet {
         }
 
         String action = request.getParameter("action");
+
         try {
             if ("add".equals(action)) {
                 // Add new staff
@@ -101,7 +99,7 @@ public class StaffController extends HttpServlet {
                 s.setAddress(request.getParameter("address"));
                 s.setEmail(request.getParameter("email"));
                 s.setTelephone(request.getParameter("telephone"));
-                s.setPassword(request.getParameter("password"));
+                s.setPassword(request.getParameter("password")); // required on add
 
                 if (!StaffService.add(s)) {
                     request.setAttribute("errorMessage", "Failed to add staff.");
@@ -111,13 +109,27 @@ public class StaffController extends HttpServlet {
                 }
 
             } else if ("edit".equals(action)) {
-                // Edit existing staff
+                // Edit existing staff (optional password change)
                 Staff s = new Staff();
                 s.setId(Integer.parseInt(request.getParameter("id")));
                 s.setUsername(request.getParameter("username"));
                 s.setAddress(request.getParameter("address"));
                 s.setEmail(request.getParameter("email"));
                 s.setTelephone(request.getParameter("telephone"));
+
+                // If "Change Password" was used, this will be non-empty (from #f-new-password)
+                String newPassword = request.getParameter("password");
+                String confirm     = request.getParameter("confirmPassword");
+
+                if (newPassword != null && !newPassword.isBlank()) {
+                    if (confirm == null || !newPassword.equals(confirm)) {
+                        request.setAttribute("errorMessage", "New password and confirm password do not match.");
+                        request.setAttribute("staffList", StaffService.getAll());
+                        request.getRequestDispatcher("/view/Staff.jsp").forward(request, response);
+                        return;
+                    }
+                    s.setPassword(newPassword); // DAO will hash
+                }
 
                 if (!StaffService.update(s)) {
                     request.setAttribute("errorMessage", "Failed to update staff.");
@@ -135,6 +147,12 @@ public class StaffController extends HttpServlet {
                     request.getRequestDispatcher("/view/Staff.jsp").forward(request, response);
                     return;
                 }
+
+            } else {
+                request.setAttribute("errorMessage", "Unknown action.");
+                request.setAttribute("staffList", StaffService.getAll());
+                request.getRequestDispatcher("/view/Staff.jsp").forward(request, response);
+                return;
             }
 
             // Redirect back to staff management page after success
@@ -146,7 +164,6 @@ public class StaffController extends HttpServlet {
             try {
                 request.setAttribute("staffList", StaffService.getAll());
             } catch (Exception ex) {
-                // Handle nested exception
                 ex.printStackTrace();
             }
             request.getRequestDispatcher("/view/Staff.jsp").forward(request, response);

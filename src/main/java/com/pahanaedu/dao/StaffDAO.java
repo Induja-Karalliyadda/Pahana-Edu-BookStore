@@ -84,28 +84,40 @@ public class StaffDAO {
         }
     }
 
+ // StaffDAO.java
     public boolean update(Staff staff) {
-        String sql = "UPDATE users SET username=?, address=?, telephone=?, email=? WHERE id=? AND role='staff'";
-        
+        boolean changePassword = staff.getPassword() != null && !staff.getPassword().isBlank();
+
+        String sql = changePassword
+            ? "UPDATE users SET username=?, address=?, telephone=?, email=?, password=SHA2(?,256) WHERE id=? AND role='staff'"
+            : "UPDATE users SET username=?, address=?, telephone=?, email=? WHERE id=? AND role='staff'";
+
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, staff.getUsername());
-            stmt.setString(2, staff.getAddress());
-            stmt.setString(3, staff.getTelephone());
-            stmt.setString(4, staff.getEmail());
-            stmt.setInt(5, staff.getId());
+            int i = 1;
+            stmt.setString(i++, staff.getUsername());
+            stmt.setString(i++, staff.getAddress());
+            stmt.setString(i++, staff.getTelephone());
+            stmt.setString(i++, staff.getEmail());
+
+            if (changePassword) {
+                stmt.setString(i++, staff.getPassword()); // will be hashed by DB
+            }
+
+            stmt.setInt(i++, staff.getId());
 
             int result = stmt.executeUpdate();
             System.out.println("✅ Staff update result: " + result + " rows affected");
             return result > 0;
-            
+
         } catch (SQLException e) {
             System.err.println("❌ Error updating staff: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
+
 
     public boolean delete(int id) {
         String sql = "DELETE FROM users WHERE id=? AND role='staff'";

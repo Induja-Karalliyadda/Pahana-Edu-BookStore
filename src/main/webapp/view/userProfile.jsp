@@ -21,7 +21,6 @@
     <div class="nav-right">
       <a href="view/cart.jsp" class="icon">&#128722;</a>
       <a href="userProfile.jsp" class="icon" aria-label="User profile">&#128100;</a>
-      
       <button id="login-signup-btn" href="view/cart.jsp">Log out </button>
     </div>
   </nav>
@@ -31,6 +30,7 @@
     <h1>Welcome to Pahana Edu BookStore</h1>
     <p>Discover your next favourite read!</p>
   </div>
+  
 </body>
 </html>
     
