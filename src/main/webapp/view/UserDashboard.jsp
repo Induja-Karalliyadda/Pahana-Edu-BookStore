@@ -110,7 +110,9 @@
                     <span class="cart-badge"><%= cartItemCount %></span>
                 <% } %>
             </a>
-            <a href="<%=ctx%>/userProfile.jsp" class="icon" aria-label="User profile" title="Profile">&#128100;</a>
+           <%-- if you already have ctx = request.getContextPath() --%>
+         <a href="${pageContext.request.contextPath}/view/UserProfile.jsp"
+   class="icon" aria-label="User profile" title="Profile">&#128100;</a>      
             <span style="color: white; margin-right: 1rem;">Welcome, <%= user.getUsername() %>!</span>
             <a href="<%=ctx%>/logout" class="logout-btn">Log out</a>
         </div>

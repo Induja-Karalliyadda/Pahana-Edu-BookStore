@@ -96,7 +96,8 @@
           <span class="cart-badge">${sessionScope.cartItemCount}</span>
         </c:if>
       </a>
-      <a href="${profileUrl}" title="Profile">&#128100;</a>
+       <a href="${pageContext.request.contextPath}/view/UserProfile.jsp"
+   class="icon" aria-label="User profile" title="Profile">&#128100;</a> 
       <a href="${logoutUrl}" class="logout-btn">Log out</a>
     </div>
   </nav>

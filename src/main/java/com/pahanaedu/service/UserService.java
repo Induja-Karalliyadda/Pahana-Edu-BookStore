@@ -17,5 +17,14 @@ public class UserService {
     public static boolean      registerUser(User u)  { return dao.registerUser(u); }
     public static User         loginUser(String idOrEmail, String pwd)
                                                      { return dao.getUserByEmailAndPassword(idOrEmail,pwd); }
+ // in UserService
+    public static boolean changePassword(int id, String currentPwd, String newPwd) {
+        return dao.changePassword(id, currentPwd, newPwd);
+    }
+
+    public static User findById(int id) {
+        try { return dao.findById(id); } catch (Exception e) { return null; }
+    }
+
     
 }

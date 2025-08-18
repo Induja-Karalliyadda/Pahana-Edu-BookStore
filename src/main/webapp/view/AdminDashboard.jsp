@@ -54,9 +54,10 @@
       <c:url var="usersUrl" value="/users"/>
       <c:url var="staffUrl" value="/staff"/>
       <c:url var="logoutUrl" value="/logout"/>
-
+	 <c:url var="OnlineOrderUrl}" value="/OnlineOrders.jsp"/>
+	 
       <a href="${dashboardUrl}">Dashboard</a>
-      <a href="#">Orders</a>
+      <a href="${OnlineOrderUrl}">Orders</a>
       <a href="${itemsBookUrl}" class="active">Item</a>
       <a href="${usersUrl}">Users</a>
 

@@ -129,6 +129,22 @@ public class UserDAO {
     public boolean registerUser(User u) {
         return createCustomer(u) != null;
     }
+ // in UserDAO
+    public boolean changePassword(int userId, String currentPlain, String newPlain) {
+        String sql = "UPDATE users SET password = SHA2(?,256) " +
+                     "WHERE id = ? AND role='user' AND password = SHA2(?,256)";
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, newPlain);
+            ps.setInt(2, userId);
+            ps.setString(3, currentPlain);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error in changePassword: " + e.getMessage());
+            return false;
+        }
+    }
+
 
     public User getUserByEmailAndPassword(String idOrEmail, String pwd) {
         String sql = """
