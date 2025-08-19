@@ -54,19 +54,19 @@
       <c:url var="usersUrl" value="/users"/>
       <c:url var="staffUrl" value="/staff"/>
       <c:url var="logoutUrl" value="/logout"/>
-	 <c:url var="OnlineOrderUrl}" value="/OnlineOrders.jsp"/>
-	 
+	<c:url var="onlineOrdersUrl" value="/online-orders"/>
+	 <c:url var="salesReportUrl" value="/sales-report"/>
       <a href="${dashboardUrl}">Dashboard</a>
-      <a href="${OnlineOrderUrl}">Orders</a>
+     <a href="${onlineOrdersUrl}">Orders</a>
       <a href="${itemsBookUrl}" class="active">Item</a>
-      <a href="${usersUrl}">Users</a>
+      <a href="${onlineOrdersUrl}">Orders</a>
 
       <!-- Show Staff link only for Admin -->
       <c:if test="${sessionScope.role == 'admin'}">
         <a href="${staffUrl}">Staff</a>
       </c:if>
       
-      <a href="#">Reports</a>
+      <a href="${salesReportUrl}" class="active">Sales Report</a>
       <a href="#">Settings</a>
       <a href="${logoutUrl}" class="logout">Logout</a>
     </nav>
