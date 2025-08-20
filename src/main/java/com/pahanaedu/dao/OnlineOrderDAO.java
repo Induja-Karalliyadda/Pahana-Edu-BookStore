@@ -5,31 +5,13 @@ import java.util.*;
 
 import com.pahanaedu.model.OnlineOrder;
 import com.pahanaedu.model.OnlineOrderItem;
+import com.pahanaedu.util.Db;
 
 public class OnlineOrderDAO {
 
-  // --- DB config ---
-  private static final String URL  =
-      "jdbc:mysql://localhost:3306/pahana_edu_book_store"
-      + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
-  private static final String USER = "root";
-  private static final String PASS = "1234";
-
-  // Load MySQL driver once
-  static {
-    try {
-      Class.forName("com.mysql.cj.jdbc.Driver");
-    } catch (ClassNotFoundException e) {
-      System.err.println("JDBC Driver load failed: " + e.getMessage());
-    }
-  }
-
-  // Get a connection
   private static Connection getConnection() throws SQLException {
-    return DriverManager.getConnection(URL, USER, PASS);
+    return Db.get().getConnection();
   }
-
-  // ===== QUERIES =====
 
   public static List<OnlineOrder> findAll() throws SQLException {
     String sql = "SELECT id, customer_name, phone, email, address, total_amount, status, created_at "
@@ -91,3 +73,4 @@ public class OnlineOrderDAO {
     }
   }
 }
+

@@ -1,25 +1,19 @@
 package com.pahanaedu.dao;
 
 import com.pahanaedu.model.User;
+import com.pahanaedu.util.Db;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserDAO {
-    private static final String URL  = "jdbc:mysql://localhost:3306/pahana_edu_book_store";
-    private static final String USER = "root";
-    private static final String PASS = "1234";
 
     private Connection getConnection() throws SQLException {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(URL, USER, PASS);
+            Connection conn = Db.get().getConnection();
             System.out.println("Database connection established successfully");
             return conn;
-        } catch (ClassNotFoundException e) {
-            System.err.println("MySQL JDBC Driver not found: " + e.getMessage());
-            throw new SQLException(e);
         } catch (SQLException e) {
             System.err.println("Database connection failed: " + e.getMessage());
             throw e;
@@ -129,7 +123,7 @@ public class UserDAO {
     public boolean registerUser(User u) {
         return createCustomer(u) != null;
     }
- // in UserDAO
+
     public boolean changePassword(int userId, String currentPlain, String newPlain) {
         String sql = "UPDATE users SET password = SHA2(?,256) " +
                      "WHERE id = ? AND role='user' AND password = SHA2(?,256)";
@@ -144,7 +138,6 @@ public class UserDAO {
             return false;
         }
     }
-
 
     public User getUserByEmailAndPassword(String idOrEmail, String pwd) {
         String sql = """
@@ -180,8 +173,6 @@ public class UserDAO {
         return null;
     }
 
-    // -------- HELPERS --------
-
     private User findByEmailOrUsername(Connection c, String email, String username) throws SQLException {
         String sql = "SELECT id, username, address, telephone, email, role, customer_code " +
                      "FROM users WHERE (email=? OR username=?) AND role='user' LIMIT 1";
@@ -205,8 +196,6 @@ public class UserDAO {
         return null;
     }
 
-    // -------- CREATE (single, canonical version) --------
-
     public User createCustomer(User u) {
         final String insertSql =
             "INSERT INTO users (username,address,telephone,email,password,role,customer_code) " +
@@ -215,7 +204,6 @@ public class UserDAO {
         try (Connection c = getConnection()) {
             c.setAutoCommit(false);
             try {
-                // 1) Prevent duplicates by email/username
                 User exists = findByEmailOrUsername(c, u.getEmail(), u.getUsername());
                 if (exists != null) {
                     c.rollback();
@@ -223,7 +211,6 @@ public class UserDAO {
                     return null;
                 }
 
-                // 2) Generate next code safely (gap-free while we hold the lock)
                 String nextCode;
                 try (PreparedStatement ps = c.prepareStatement(
                          "SELECT LPAD(COALESCE(MAX(CAST(SUBSTRING(customer_code,2) AS UNSIGNED)),0) + 1, 3, '0') " +
@@ -232,9 +219,8 @@ public class UserDAO {
                     rs.next();
                     nextCode = "C" + rs.getString(1);
                 }
-                String defaultPwd = nextCode; // rule: temp password = code
+                String defaultPwd = nextCode;
 
-                // 3) Insert row
                 int newId;
                 try (PreparedStatement ps = c.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
                     ps.setString(1, u.getUsername());
@@ -260,7 +246,7 @@ public class UserDAO {
                 created.setEmail(u.getEmail());
                 created.setRole("user");
                 created.setCustomerCode(nextCode);
-                created.setTempPassword(defaultPwd); // expose to controller for email
+                created.setTempPassword(defaultPwd);
                 System.out.println("Registration SUCCESS. New ID: " + newId + ", Code: " + nextCode);
                 return created;
 
@@ -280,13 +266,13 @@ public class UserDAO {
             return null;
         }
     }
- // Find a user by customer_code (used as fallback if Order doesn't expose customerId)
+
     public User findByCustomerCode(String customerCode) throws Exception {
         String sql = "SELECT id, username, email, address, telephone, customer_code, role FROM users WHERE customer_code = ?";
-        try (java.sql.Connection con = getConnection();
-             java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, customerCode);
-            try (java.sql.ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     User u = new User();
                     u.setId(rs.getInt("id"));
@@ -302,6 +288,7 @@ public class UserDAO {
         }
         return null;
     }
+
     public User findById(int id) throws Exception {
         String sql = "SELECT id, username, email, address, telephone, customer_code, role FROM users WHERE id = ?";
         try (Connection con = getConnection();
@@ -323,5 +310,4 @@ public class UserDAO {
         }
         return null;
     }
-
 }

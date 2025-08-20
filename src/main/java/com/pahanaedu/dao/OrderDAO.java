@@ -2,6 +2,7 @@ package com.pahanaedu.dao;
 
 import com.pahanaedu.model.Order;
 import com.pahanaedu.model.OrderDetail;
+import com.pahanaedu.util.Db;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -11,10 +12,7 @@ import java.util.List;
 public class OrderDAO {
 
     private Connection getConn() throws SQLException {
-        return DriverManager.getConnection(
-            "jdbc:mysql://localhost:3306/pahana_edu_book_store",
-            "root", "1234"
-        );
+        return Db.get().getConnection();
     }
 
     // ---------- CREATE ----------
@@ -33,7 +31,7 @@ public class OrderDAO {
             p.executeUpdate();
             try (ResultSet rs = p.getGeneratedKeys()) {
                 rs.next();
-                return rs.getInt(1); // this will be order_id (auto-increment PK)
+                return rs.getInt(1);
             }
         }
     }
@@ -77,9 +75,7 @@ public class OrderDAO {
 
     // ---------- READ for Invoice PDF ----------
 
-    /** Load an order with its detail rows (for InvoicePdfController). */
     public Order getOrderWithDetails(int orderId) {
-        // Use your actual column names. Most schemas use order_id / detail_id.
         String orderSql =
             "SELECT order_id, invoice_number, customer_id, customer_name, customer_code, total_amount, " +
             "       COALESCE(created_at, order_date) AS created_at " +
@@ -104,7 +100,6 @@ public class OrderDAO {
                     o.setCustomerName(rs.getString("customer_name"));
                     o.setCustomerCode(rs.getString("customer_code"));
                     o.setTotalAmount(rs.getBigDecimal("total_amount"));
-                    // store date/time into Order.orderDate (your model uses Timestamp)
                     try {
                         o.setOrderDate(rs.getTimestamp("created_at"));
                     } catch (SQLException ignore) {
@@ -147,5 +142,4 @@ public class OrderDAO {
         }
     }
 }
-
 
